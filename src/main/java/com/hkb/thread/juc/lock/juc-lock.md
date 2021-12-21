@@ -37,70 +37,52 @@ public interface Lock {
 继承了AbstractOwnableSynchronizer类，是lock的第二层类。
 ## 4.1 Node
 ```java
+// AQS Node节点
 static final class Node {
-        static final Node SHARED = new Node();
-        static final Node EXCLUSIVE = null;
-        
-        static final int CANCELLED =  1;
-        static final int SIGNAL    = -1;
-        static final int CONDITION = -2;
-        static final int PROPAGATE = -3;
-        
-        volatile int waitStatus;
-
-        
-        volatile Node prev;
-        volatile Node next;
-        
-        volatile Thread thread;
-
-        /**
-         * Link to next node waiting on condition, or the special
-         * value SHARED.  Because condition queues are accessed only
-         * when holding in exclusive mode, we just need a simple
-         * linked queue to hold nodes while they are waiting on
-         * conditions. They are then transferred to the queue to
-         * re-acquire. And because conditions can only be exclusive,
-         * we save a field by using special value to indicate shared
-         * mode.
-         */
-        Node nextWaiter;
-
-        /**
-         * Returns true if node is waiting in shared mode.
-         */
-        final boolean isShared() {
-            return nextWaiter == SHARED;
-        }
-
-        /**
-         * Returns previous node, or throws NullPointerException if null.
-         * Use when predecessor cannot be null.  The null check could
-         * be elided, but is present to help the VM.
-         *
-         * @return the predecessor of this node
-         */
-        final Node predecessor() throws NullPointerException {
-            Node p = prev;
-            if (p == null)
-                throw new NullPointerException();
-            else
-                return p;
-        }
-
-        Node() {    // Used to establish initial head or SHARED marker
-        }
-
-        Node(Thread thread, Node mode) {     // Used by addWaiter
-            this.nextWaiter = mode;
-            this.thread = thread;
-        }
-
-        Node(Thread thread, int waitStatus) { // Used by Condition
-            this.waitStatus = waitStatus;
-            this.thread = thread;
-        }
+    // 模式，共享锁、独占锁
+    static final Node SHARED = new Node();
+    static final Node EXCLUSIVE = null;
+    Node nextWaiter;
+    
+    // 等待状态
+    static final int CANCELLED =  1;
+    static final int SIGNAL    = -1;
+    static final int CONDITION = -2;
+    static final int PROPAGATE = -3;
+    volatile int waitStatus;
+    
+    // 前一个结点 和 后一个结点
+    volatile Node prev;
+    volatile Node next;
+    
+    //结点内存放的线程
+    volatile Thread thread;
+    
+    final boolean isShared() {
+        return nextWaiter == SHARED;
     }
+    
+    // 获取前一个结点
+    final Node predecessor() throws NullPointerException {
+        Node p = prev;
+        if (p == null)
+            throw new NullPointerException();
+        else
+            return p;
+    }
+
+    Node() {}
+
+    Node(Thread thread, Node mode) {     // Used by addWaiter
+        this.nextWaiter = mode;
+        this.thread = thread;
+    }
+
+    Node(Thread thread, int waitStatus) { // Used by Condition
+        this.waitStatus = waitStatus;
+        this.thread = thread;
+    }
+}
 ```
 
 # 5. ReentrantLock
