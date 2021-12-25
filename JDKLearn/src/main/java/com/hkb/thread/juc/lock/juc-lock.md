@@ -1,22 +1,3 @@
-# 1. 概述
-JUC包下的lock包，源代码阅读记录
-# 2. AbstractOwnableSynchronizer
-lock的最底层类 ，包含一个空构造器，如下的成员变量，以及其get和set方法
-```java
-public abstract class AbstractOwnableSynchronizer implements java.io.Serializable {
-    private static final long serialVersionUID = 3737899427754241961L;
-    protected AbstractOwnableSynchronizer() { }
-    //当前锁拥有的线程
-    private transient Thread exclusiveOwnerThread;
-    protected final void setExclusiveOwnerThread(Thread thread) {
-        exclusiveOwnerThread = thread;
-    }
-    protected final Thread getExclusiveOwnerThread() {
-        return exclusiveOwnerThread;
-    }
-}
-```
-
 # 3. Lock接口
 Lock接口定义了如下6个方法：
 ```java
