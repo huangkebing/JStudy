@@ -40,21 +40,13 @@
 // 
 //
 // 进阶：你可以想出一个时间复杂度小于 O(n²) 的算法吗？ 
-// Related Topics 数组 哈希表 👍 12869 👎 0
+// Related Topics 数组 哈希表 👍 12964 👎 0
 
 
 //leetcode submit region begin(Prohibit modification and deletion)
 class Solution {
     public int[] twoSum(int[] nums, int target) {
-        Map<Integer, Integer> map = new HashMap<Integer, Integer>();
-        for (int i = 0; i < nums.length; i++) {
-            if(map.containsKey(target - nums[i])){
-                return new int[] { map.get(target - nums[i]), i };
-            } else{
-                map.put(nums[i], i);
-            }
-        }
-        return null;
+
     }
 }
 //leetcode submit region end(Prohibit modification and deletion)
