@@ -75,8 +75,7 @@ public interface List<E> extends Collection<E> {
     <T> T[] toArray(T[] a);
 
 
-    // Modification Operations
-
+    // 修改操作
     /**
      * 添加元素
      */
@@ -87,9 +86,7 @@ public interface List<E> extends Collection<E> {
      */
     boolean remove(Object o);
 
-
-    // Bulk Modification Operations
-
+    // 批量操作
     /**
      * 给定集合，判断是否包含这个集合
      */
