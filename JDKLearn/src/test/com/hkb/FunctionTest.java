@@ -44,16 +44,32 @@ public class FunctionTest {
         integers.add(10);
         integers.add(11);
         integers.add(12);
-
+        System.out.println("-----------------------");
         List<Integer> collect1 = integers.stream()
                 // Predicate.and() 配合filter实现 与操作，过滤出3和4的公倍数
                 .filter(((Predicate<Integer>) i -> i % 4 == 0).and(i-> i % 3 == 0))
                 .collect(Collectors.toList());
         collect1.forEach(System.out::println);
-
+        System.out.println("-----------------------");
         List<Integer> collect2 = integers.stream()
+                // Predicate.or() 配合filter实现 或操作，过滤出3的倍数和4的倍数
                 .filter(((Predicate<Integer>) i -> i % 4 == 0).or(i-> i % 3 == 0))
                 .collect(Collectors.toList());
         collect2.forEach(System.out::println);
+        System.out.println("-----------------------");
+        List<Integer> collect3 = integers.stream()
+                // Predicate.negate() 配合filter实现 非操作，过滤掉3的倍数
+                // 和i -> i % 3 != 0 效果相同，感觉用处不大
+                .filter(((Predicate<Integer>) i -> i % 3 == 0).negate())
+                .collect(Collectors.toList());
+        collect3.forEach(System.out::println);
+        System.out.println("-----------------------");
+        List<Integer> collect4 = integers.stream()
+                // isEqual() 方法实现 等值过滤
+                // 和i -> i == 12 效果相同
+                .filter(Predicate.isEqual(12))
+                .collect(Collectors.toList());
+        collect4.forEach(System.out::println);
+        System.out.println("-----------------------");
     }
 }
