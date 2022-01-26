@@ -7,6 +7,7 @@
         <module>leetcode</module>
         <module>JDKLearn</module>
         <module>JavaLearn</module>
+        <module>JVMLearn</module>
     </modules>
     <groupId>com</groupId>
     <artifactId>hkb</artifactId>
