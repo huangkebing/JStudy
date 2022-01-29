@@ -7,6 +7,7 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.function.BiConsumer;
 import java.util.function.Consumer;
+import java.util.function.Function;
 import java.util.function.Predicate;
 import java.util.stream.Collectors;
 
@@ -72,4 +73,36 @@ public class FunctionTest {
         collect4.forEach(System.out::println);
         System.out.println("-----------------------");
     }
+
+    @Test
+    public void FunctionInterfaceTest(){
+        ArrayList<Integer> integers = new ArrayList<>();
+        integers.add(5);
+        integers.add(6);
+        integers.add(7);
+        System.out.println("-----------------------");
+        // Function.apply()
+        List<String> collect1 = integers.stream().map(String::valueOf).collect(Collectors.toList());
+        collect1.forEach(System.out::println);
+        System.out.println("-----------------------");
+        // Function.compose() 在apply方法执行前，先执行compose方法
+        List<String> collect2 = integers.stream()
+                .map(((Function<Integer, String>) String::valueOf).compose(i -> i += 1))
+                .collect(Collectors.toList());
+        collect2.forEach(System.out::println);
+        System.out.println("-----------------------");
+        // Function.andThen() 在apply方法后执行
+        List<String> collect3 = integers.stream()
+                .map(((Function<Integer, Integer>) i -> i += 1).andThen(String::valueOf))
+                .collect(Collectors.toList());
+        collect3.forEach(System.out::println);
+        System.out.println("-----------------------");
+        // compose 和 andThen也可以组合使用
+        List<String> collect4 = integers.stream()
+                .map(((Function<Integer, Integer>) i -> i += 1).andThen(String::valueOf).compose(i -> i + 1))
+                .collect(Collectors.toList());
+        collect4.forEach(System.out::println);
+        System.out.println("-----------------------");
+    }
+
 }
