@@ -1,4 +1,4 @@
-package com.hkb.collection;
+package com.hkb;
 
 import org.junit.Test;
 
