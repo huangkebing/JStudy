@@ -6,204 +6,150 @@ import java.util.function.IntBinaryOperator;
 import java.util.function.IntUnaryOperator;
 
 /**
- * 原子类 int数组
+ * 原子类 int数组（初始化有一些区别，后续使用AtomicInteger类似）
  */
 public class AtomicIntegerArray implements java.io.Serializable {
     private static final long serialVersionUID = 2862133569453604235L;
 
     private static final Unsafe unsafe = Unsafe.getUnsafe();
+    // 获得数组第一个元素的偏移量
     private static final int base = unsafe.arrayBaseOffset(int[].class);
+    // 偏移量计算单位，值为log2(scale)，int 的scale=4，则shift=2
     private static final int shift;
     private final int[] array;
 
     static {
+        // 获得数组的增量偏移量 int为4个字节，所以scale=4
         int scale = unsafe.arrayIndexScale(int[].class);
+        // 校验scale是否为2的幂次
         if ((scale & (scale - 1)) != 0)
             throw new Error("data type scale not a power of two");
+        // numberOfLeadingZeros 获得该数二进制高位0的个数，为29，shift=2，即计算scale是2的几次幂
         shift = 31 - Integer.numberOfLeadingZeros(scale);
     }
 
     private long checkedByteOffset(int i) {
+        // 数组范围检查
         if (i < 0 || i >= array.length)
             throw new IndexOutOfBoundsException("index " + i);
-
+        // 通过检查，则计算偏移量
         return byteOffset(i);
     }
 
+    // 计算i为位置的元素在内存中的偏移量
     private static long byteOffset(int i) {
         return ((long) i << shift) + base;
     }
 
     /**
-     * Creates a new AtomicIntegerArray of the given length, with all
-     * elements initially zero.
-     *
-     * @param length the length of the array
+     * 有参构造器1，给定长度
      */
     public AtomicIntegerArray(int length) {
         array = new int[length];
     }
 
     /**
-     * Creates a new AtomicIntegerArray with the same length as, and
-     * all elements copied from, the given array.
-     *
-     * @param array the array to copy elements from
-     * @throws NullPointerException if array is null
+     * 有参构造器2，给定一个数组
      */
     public AtomicIntegerArray(int[] array) {
-        // Visibility guaranteed by final field guarantees
         this.array = array.clone();
     }
 
     /**
-     * Returns the length of the array.
-     *
-     * @return the length of the array
+     * 获得长度
      */
     public final int length() {
         return array.length;
     }
 
     /**
-     * Gets the current value at position {@code i}.
-     *
-     * @param i the index
-     * @return the current value
+     * 获得i位置的元素，调用checkedByteOffset，校验并获得偏移量
      */
     public final int get(int i) {
         return getRaw(checkedByteOffset(i));
     }
 
+    /*
+    * 根据偏移量，通过unsafe取值
+    */
     private int getRaw(long offset) {
         return unsafe.getIntVolatile(array, offset);
     }
 
     /**
-     * Sets the element at position {@code i} to the given value.
-     *
-     * @param i the index
-     * @param newValue the new value
+     * 根据偏移量，通过unsafe更新值
      */
     public final void set(int i, int newValue) {
         unsafe.putIntVolatile(array, checkedByteOffset(i), newValue);
     }
 
     /**
-     * Eventually sets the element at position {@code i} to the given value.
-     *
-     * @param i the index
-     * @param newValue the new value
-     * @since 1.6
+     * 普通方式设置，不保证其他线程可见
      */
     public final void lazySet(int i, int newValue) {
         unsafe.putOrderedInt(array, checkedByteOffset(i), newValue);
     }
 
     /**
-     * Atomically sets the element at position {@code i} to the given
-     * value and returns the old value.
-     *
-     * @param i the index
-     * @param newValue the new value
-     * @return the previous value
+     * 获得原值，并更新
      */
     public final int getAndSet(int i, int newValue) {
         return unsafe.getAndSetInt(array, checkedByteOffset(i), newValue);
     }
 
     /**
-     * Atomically sets the element at position {@code i} to the given
-     * updated value if the current value {@code ==} the expected value.
-     *
-     * @param i the index
-     * @param expect the expected value
-     * @param update the new value
-     * @return {@code true} if successful. False return indicates that
-     * the actual value was not equal to the expected value.
+     * CAS
      */
     public final boolean compareAndSet(int i, int expect, int update) {
         return compareAndSetRaw(checkedByteOffset(i), expect, update);
     }
 
+    // CAS调用内部方法，在计算出偏移量后进行CAS
     private boolean compareAndSetRaw(long offset, int expect, int update) {
         return unsafe.compareAndSwapInt(array, offset, expect, update);
     }
 
-    /**
-     * Atomically sets the element at position {@code i} to the given
-     * updated value if the current value {@code ==} the expected value.
-     *
-     * <p><a href="package-summary.html#weakCompareAndSet">May fail
-     * spuriously and does not provide ordering guarantees</a>, so is
-     * only rarely an appropriate alternative to {@code compareAndSet}.
-     *
-     * @param i the index
-     * @param expect the expected value
-     * @param update the new value
-     * @return {@code true} if successful
-     */
     public final boolean weakCompareAndSet(int i, int expect, int update) {
         return compareAndSet(i, expect, update);
     }
 
     /**
-     * Atomically increments by one the element at index {@code i}.
-     *
-     * @param i the index
-     * @return the previous value
+     * 获得原值，并更新原值+1
      */
     public final int getAndIncrement(int i) {
         return getAndAdd(i, 1);
     }
 
     /**
-     * Atomically decrements by one the element at index {@code i}.
-     *
-     * @param i the index
-     * @return the previous value
+     * 获得原值，并更新原值-1
      */
     public final int getAndDecrement(int i) {
         return getAndAdd(i, -1);
     }
 
     /**
-     * Atomically adds the given value to the element at index {@code i}.
-     *
-     * @param i the index
-     * @param delta the value to add
-     * @return the previous value
+     * 获得原值，并更新原值+delta
      */
     public final int getAndAdd(int i, int delta) {
         return unsafe.getAndAddInt(array, checkedByteOffset(i), delta);
     }
 
     /**
-     * Atomically increments by one the element at index {@code i}.
-     *
-     * @param i the index
-     * @return the updated value
+     * 更新原值+1，并获得新值
      */
     public final int incrementAndGet(int i) {
         return getAndAdd(i, 1) + 1;
     }
 
     /**
-     * Atomically decrements by one the element at index {@code i}.
-     *
-     * @param i the index
-     * @return the updated value
+     * 更新原值-1，并获得新值
      */
     public final int decrementAndGet(int i) {
         return getAndAdd(i, -1) - 1;
     }
 
     /**
-     * Atomically adds the given value to the element at index {@code i}.
-     *
-     * @param i the index
-     * @param delta the value to add
-     * @return the updated value
+     * 更新原值+delta，并获得新值
      */
     public final int addAndGet(int i, int delta) {
         return getAndAdd(i, delta) + delta;
@@ -211,15 +157,7 @@ public class AtomicIntegerArray implements java.io.Serializable {
 
 
     /**
-     * Atomically updates the element at index {@code i} with the results
-     * of applying the given function, returning the previous value. The
-     * function should be side-effect-free, since it may be re-applied
-     * when attempted updates fail due to contention among threads.
-     *
-     * @param i the index
-     * @param updateFunction a side-effect-free function
-     * @return the previous value
-     * @since 1.8
+     * 给定IntUnaryOperator，原值按照该规则计算结果，更新结果，并返回原值
      */
     public final int getAndUpdate(int i, IntUnaryOperator updateFunction) {
         long offset = checkedByteOffset(i);
@@ -232,15 +170,7 @@ public class AtomicIntegerArray implements java.io.Serializable {
     }
 
     /**
-     * Atomically updates the element at index {@code i} with the results
-     * of applying the given function, returning the updated value. The
-     * function should be side-effect-free, since it may be re-applied
-     * when attempted updates fail due to contention among threads.
-     *
-     * @param i the index
-     * @param updateFunction a side-effect-free function
-     * @return the updated value
-     * @since 1.8
+     * 给定IntUnaryOperator，原值按照该规则计算结果，更新结果，并返回新值
      */
     public final int updateAndGet(int i, IntUnaryOperator updateFunction) {
         long offset = checkedByteOffset(i);
@@ -253,19 +183,7 @@ public class AtomicIntegerArray implements java.io.Serializable {
     }
 
     /**
-     * Atomically updates the element at index {@code i} with the
-     * results of applying the given function to the current and
-     * given values, returning the previous value. The function should
-     * be side-effect-free, since it may be re-applied when attempted
-     * updates fail due to contention among threads.  The function is
-     * applied with the current value at index {@code i} as its first
-     * argument, and the given update as the second argument.
-     *
-     * @param i the index
-     * @param x the update value
-     * @param accumulatorFunction a side-effect-free function of two arguments
-     * @return the previous value
-     * @since 1.8
+     * 给定x和accumulatorFunction，原值按照该规则计算结果，更新结果，并返回原值
      */
     public final int getAndAccumulate(int i, int x,
                                       IntBinaryOperator accumulatorFunction) {
@@ -279,19 +197,7 @@ public class AtomicIntegerArray implements java.io.Serializable {
     }
 
     /**
-     * Atomically updates the element at index {@code i} with the
-     * results of applying the given function to the current and
-     * given values, returning the updated value. The function should
-     * be side-effect-free, since it may be re-applied when attempted
-     * updates fail due to contention among threads.  The function is
-     * applied with the current value at index {@code i} as its first
-     * argument, and the given update as the second argument.
-     *
-     * @param i the index
-     * @param x the update value
-     * @param accumulatorFunction a side-effect-free function of two arguments
-     * @return the updated value
-     * @since 1.8
+     * 给定x和accumulatorFunction，原值按照该规则计算结果，更新结果，并返回新值
      */
     public final int accumulateAndGet(int i, int x,
                                       IntBinaryOperator accumulatorFunction) {
@@ -304,10 +210,6 @@ public class AtomicIntegerArray implements java.io.Serializable {
         return next;
     }
 
-    /**
-     * Returns the String representation of the current values of array.
-     * @return the String representation of the current values of array
-     */
     public String toString() {
         int iMax = array.length - 1;
         if (iMax == -1)
