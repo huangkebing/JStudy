@@ -5,6 +5,7 @@ import org.junit.Test;
 import java.util.concurrent.atomic.AtomicIntegerArray;
 import java.util.concurrent.atomic.AtomicIntegerFieldUpdater;
 import java.util.concurrent.atomic.AtomicReferenceArray;
+import java.util.concurrent.atomic.LongAdder;
 
 public class AtomicTest {
     @Test
@@ -27,6 +28,15 @@ public class AtomicTest {
     @Test
     public void referenceTest(){
         AtomicReferenceArray<Detail> detailAtomicReferenceArray = new AtomicReferenceArray<>(2);
+    }
+
+    @Test
+    public void longAdderTest(){
+        LongAdder longAdder = new LongAdder();
+        longAdder.increment();
+        System.out.println(longAdder.longValue());
+        longAdder.reset();
+        System.out.println(longAdder.longValue());
     }
 }
 
