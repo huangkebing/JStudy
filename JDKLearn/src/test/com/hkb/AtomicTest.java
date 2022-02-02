@@ -4,6 +4,7 @@ import org.junit.Test;
 
 import java.util.concurrent.atomic.AtomicIntegerArray;
 import java.util.concurrent.atomic.AtomicIntegerFieldUpdater;
+import java.util.concurrent.atomic.AtomicReferenceArray;
 
 public class AtomicTest {
     @Test
@@ -21,6 +22,11 @@ public class AtomicTest {
         Detail detail = new Detail();
         detail.count = 5;
         System.out.println(count.addAndGet(detail, 5));
+    }
+
+    @Test
+    public void referenceTest(){
+        AtomicReferenceArray<Detail> detailAtomicReferenceArray = new AtomicReferenceArray<>(2);
     }
 }
 
