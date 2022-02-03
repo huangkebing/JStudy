@@ -2,6 +2,7 @@ package com.hkb;
 
 import org.junit.Test;
 
+import java.util.concurrent.ThreadLocalRandom;
 import java.util.concurrent.atomic.AtomicIntegerArray;
 import java.util.concurrent.atomic.AtomicIntegerFieldUpdater;
 import java.util.concurrent.atomic.AtomicReferenceArray;
@@ -27,7 +28,9 @@ public class AtomicTest {
 
     @Test
     public void referenceTest(){
-        AtomicReferenceArray<Detail> detailAtomicReferenceArray = new AtomicReferenceArray<>(2);
+        ThreadLocalRandom.current();
+        Thread thread = Thread.currentThread();
+        System.out.println(1);
     }
 
     @Test

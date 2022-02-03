@@ -12,46 +12,47 @@ public class LongAdder extends Striped64 implements Serializable {
     }
 
     /**
-     * Adds the given value.
-     *
-     * @param x the value to add
+     * 计数器+X
      */
     public void add(long x) {
-        Cell[] as; long b, v; int m; Cell a;
+        Cell[] as;
+        long b, v;
+        int m;
+        Cell a;
+        // 如果cell数组为null，且cas修改base字段成功，则表示已经add成功
+        // 若cell数组不为null，则不修改base字段
         if ((as = cells) != null || !casBase(b = base, b + x)) {
             boolean uncontended = true;
-            if (as == null || (m = as.length - 1) < 0 ||
-                (a = as[getProbe() & m]) == null ||
-                !(uncontended = a.cas(v = a.value, v + x)))
+            // 执行longAccumulate方法的条件如下，满足一个即执行：
+            // 1.若cell数组为null
+            // 2.若cell数组的长度为0
+            // 3.若cell数组下标为getProbe() & m 的元素为null
+            // 4.若CAS第三条中的元素失败
+            if (as == null || (m = as.length - 1) < 0 || (a = as[getProbe() & m]) == null || !(uncontended = a.cas(v = a.value, v + x)))
                 longAccumulate(x, null, uncontended);
         }
     }
 
     /**
-     * +1
+     * 计数器+1
      */
     public void increment() {
         add(1L);
     }
 
     /**
-     * -1
+     * 计数器-1
      */
     public void decrement() {
         add(-1L);
     }
 
     /**
-     * Returns the current sum.  The returned value is <em>NOT</em> an
-     * atomic snapshot; invocation in the absence of concurrent
-     * updates returns an accurate result, but concurrent updates that
-     * occur while the sum is being calculated might not be
-     * incorporated.
-     *
-     * @return the sum
+     * cell数组和base所有值相加
      */
     public long sum() {
-        Cell[] as = cells; Cell a;
+        Cell[] as = cells;
+        Cell a;
         long sum = base;
         if (as != null) {
             for (int i = 0; i < as.length; ++i) {
@@ -78,14 +79,7 @@ public class LongAdder extends Striped64 implements Serializable {
     }
 
     /**
-     * Equivalent in effect to {@link #sum} followed by {@link
-     * #reset}. This method may apply for example during quiescent
-     * points between multithreaded computations.  If there are
-     * updates concurrent with this method, the returned value is
-     * <em>not</em> guaranteed to be the final value occurring before
-     * the reset.
-     *
-     * @return the sum
+     * 获得sum值，然后重置
      */
     public long sumThenReset() {
         Cell[] as = cells; Cell a;
@@ -123,16 +117,13 @@ public class LongAdder extends Striped64 implements Serializable {
     }
 
     /**
-     * Serialization proxy, used to avoid reference to the non-public
-     * Striped64 superclass in serialized forms.
-     * @serial include
+     * 序列化代理类，专门用于序列化，避免在序列化中使用Striped64超类
      */
     private static class SerializationProxy implements Serializable {
         private static final long serialVersionUID = 7249069246863182397L;
 
         /**
-         * The current value returned by sum().
-         * @serial
+         * 保存LongAdder的sum值，在构造中初始化
          */
         private final long value;
 
@@ -141,11 +132,7 @@ public class LongAdder extends Striped64 implements Serializable {
         }
 
         /**
-         * Return a {@code LongAdder} object with initial state
-         * held by this proxy.
-         *
-         * @return a {@code LongAdder} object with initial state
-         * held by this proxy.
+         * 反序列化方法
          */
         private Object readResolve() {
             LongAdder a = new LongAdder();
@@ -154,23 +141,11 @@ public class LongAdder extends Striped64 implements Serializable {
         }
     }
 
-    /**
-     * Returns a
-     * <a href="../../../../serialized-form.html#java.util.concurrent.atomic.LongAdder.SerializationProxy">
-     * SerializationProxy</a>
-     * representing the state of this instance.
-     *
-     * @return a {@link SerializationProxy}
-     * representing the state of this instance
-     */
     private Object writeReplace() {
         return new SerializationProxy(this);
     }
 
-    /**
-     * @param s the stream
-     * @throws java.io.InvalidObjectException always
-     */
+    // 不能直接调用LongAdder的反序列化方法
     private void readObject(java.io.ObjectInputStream s)
         throws java.io.InvalidObjectException {
         throw new java.io.InvalidObjectException("Proxy required");
