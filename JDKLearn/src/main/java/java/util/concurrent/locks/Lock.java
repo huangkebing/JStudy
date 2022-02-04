@@ -8,7 +8,7 @@ import java.util.concurrent.TimeUnit;
 public interface Lock {
 
     /**
-     * 获得锁
+     * 获得锁，如果当前被别的线程占有，就会阻塞
      */
     void lock();
 
@@ -18,12 +18,12 @@ public interface Lock {
     void lockInterruptibly() throws InterruptedException;
 
     /**
-     * 仅当调用时它是空闲的时才获取锁
+     * 仅当调用时它是空闲的时才获取锁，如果当前被别的线程占有，那么返回false
      */
     boolean tryLock();
 
     /**
-     * 带时间限制的tryLock()
+     * 带时间限制的tryLock()，若被别的线程占有，则等待至多unit时间，时间到了还没获取返回false
      */
     boolean tryLock(long time, TimeUnit unit) throws InterruptedException;
 
