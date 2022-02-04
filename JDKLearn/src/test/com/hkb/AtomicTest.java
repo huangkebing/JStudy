@@ -2,12 +2,13 @@ package com.hkb;
 
 import org.junit.Test;
 
-import java.util.concurrent.ThreadLocalRandom;
 import java.util.concurrent.atomic.AtomicIntegerArray;
 import java.util.concurrent.atomic.AtomicIntegerFieldUpdater;
-import java.util.concurrent.atomic.AtomicReferenceArray;
 import java.util.concurrent.atomic.LongAdder;
 
+/**
+ * 原子类测试类
+ */
 public class AtomicTest {
     @Test
     public void atomicArrayTest(){
@@ -24,12 +25,6 @@ public class AtomicTest {
         Detail detail = new Detail();
         detail.count = 5;
         System.out.println(count.addAndGet(detail, 5));
-    }
-
-    @Test
-    public void referenceTest(){
-        double d = 1.421;
-        System.out.println(Double.doubleToRawLongBits(d));
     }
 
     @Test

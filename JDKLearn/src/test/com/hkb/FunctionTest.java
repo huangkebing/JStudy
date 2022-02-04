@@ -11,6 +11,9 @@ import java.util.function.Function;
 import java.util.function.Predicate;
 import java.util.stream.Collectors;
 
+/**
+ * Java8 function包测试类
+ */
 public class FunctionTest {
     @Test
     public void consumerTest(){
