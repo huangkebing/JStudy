@@ -4,44 +4,9 @@ import java.io.Serializable;
 import java.util.function.LongBinaryOperator;
 
 /**
- * One or more variables that together maintain a running {@code long}
- * value updated using a supplied function.  When updates (method
- * {@link #accumulate}) are contended across threads, the set of variables
- * may grow dynamically to reduce contention.  Method {@link #get}
- * (or, equivalently, {@link #longValue}) returns the current value
- * across the variables maintaining updates.
- *
- * <p>This class is usually preferable to {@link AtomicLong} when
- * multiple threads update a common value that is used for purposes such
- * as collecting statistics, not for fine-grained synchronization
- * control.  Under low update contention, the two classes have similar
- * characteristics. But under high contention, expected throughput of
- * this class is significantly higher, at the expense of higher space
- * consumption.
- *
- * <p>The order of accumulation within or across threads is not
- * guaranteed and cannot be depended upon, so this class is only
- * applicable to functions for which the order of accumulation does
- * not matter. The supplied accumulator function should be
- * side-effect-free, since it may be re-applied when attempted updates
- * fail due to contention among threads. The function is applied with
- * the current value as its first argument, and the given update as
- * the second argument.  For example, to maintain a running maximum
- * value, you could supply {@code Long::max} along with {@code
- * Long.MIN_VALUE} as the identity.
- *
- * <p>Class {@link LongAdder} provides analogs of the functionality of
- * this class for the common special case of maintaining counts and
- * sums.  The call {@code new LongAdder()} is equivalent to {@code new
- * LongAccumulator((x, y) -> x + y, 0L}.
- *
- * <p>This class extends {@link Number}, but does <em>not</em> define
- * methods such as {@code equals}, {@code hashCode} and {@code
- * compareTo} because instances are expected to be mutated, and so are
- * not useful as collection keys.
- *
- * @since 1.8
- * @author Doug Lea
+ * 和LongAdder原理基本一致，两者区别如下：
+ * 1. LongAdder只支持加法计算，本类支持通过LongBinaryOperator自定义计算规则，不局限于加法
+ * 2. LongAdder只支持默认值为0，本类支持通过identity给定默认值
  */
 public class LongAccumulator extends Striped64 implements Serializable {
     private static final long serialVersionUID = 7249069246863182397L;
@@ -55,44 +20,38 @@ public class LongAccumulator extends Striped64 implements Serializable {
     public LongAccumulator(LongBinaryOperator accumulatorFunction,
                            long identity) {
         this.function = accumulatorFunction;
+        // 默认值，LongAdder里面初始值只能为0
         base = this.identity = identity;
     }
 
     /**
-     * Updates with the given value.
-     *
-     * @param x the value
+     * 计数器+X
      */
     public void accumulate(long x) {
         Cell[] as; long b, v, r; int m; Cell a;
-        if ((as = cells) != null ||
-            (r = function.applyAsLong(b = base, x)) != b && !casBase(b, r)) {
+        // 若cell不为null，base和x计算后!=base且cas base成功，或者base和x计算后==base，则直接结束
+        if ((as = cells) != null || (r = function.applyAsLong(b = base, x)) != b && !casBase(b, r)) {
             boolean uncontended = true;
+            // 此条件和LongAdder一致
             if (as == null || (m = as.length - 1) < 0 ||
                 (a = as[getProbe() & m]) == null ||
-                !(uncontended =
-                  (r = function.applyAsLong(v = a.value, x)) == v ||
-                  a.cas(v, r)))
+                !(uncontended = (r = function.applyAsLong(v = a.value, x)) == v || a.cas(v, r)))
                 longAccumulate(x, function, uncontended);
         }
     }
 
     /**
-     * Returns the current value.  The returned value is <em>NOT</em>
-     * an atomic snapshot; invocation in the absence of concurrent
-     * updates returns an accurate result, but concurrent updates that
-     * occur while the value is being calculated might not be
-     * incorporated.
-     *
-     * @return the current value
+     * 返回值，若只有base，直接返回；否则按照给定的计算规则进行计算，返回计算结果
      */
     public long get() {
         Cell[] as = cells;
         Cell a;
         long result = base;
+        // 若cell为null，直接返回base
         if (as != null) {
             for (int i = 0; i < as.length; ++i) {
                 if ((a = as[i]) != null)
+                    // 若有cell，将result和cell按照给定的计算规则计算
                     result = function.applyAsLong(result, a.value);
             }
         }
@@ -100,12 +59,7 @@ public class LongAccumulator extends Striped64 implements Serializable {
     }
 
     /**
-     * Resets variables maintaining updates to the identity value.
-     * This method may be a useful alternative to creating a new
-     * updater, but is only effective if there are no concurrent
-     * updates.  Because this method is intrinsically racy, it should
-     * only be used when it is known that no threads are concurrently
-     * updating.
+     * 重置，将base和cell都置为给定的初始值
      */
     public void reset() {
         Cell[] as = cells; Cell a;
@@ -119,14 +73,7 @@ public class LongAccumulator extends Striped64 implements Serializable {
     }
 
     /**
-     * Equivalent in effect to {@link #get} followed by {@link
-     * #reset}. This method may apply for example during quiescent
-     * points between multithreaded computations.  If there are
-     * updates concurrent with this method, the returned value is
-     * <em>not</em> guaranteed to be the final value occurring before
-     * the reset.
-     *
-     * @return the value before reset
+     * 获得值并重置
      */
     public long getThenReset() {
         Cell[] as = cells; Cell a;
@@ -144,69 +91,33 @@ public class LongAccumulator extends Striped64 implements Serializable {
         return result;
     }
 
-    /**
-     * Returns the String representation of the current value.
-     * @return the String representation of the current value
-     */
     public String toString() {
         return Long.toString(get());
     }
 
-    /**
-     * Equivalent to {@link #get}.
-     *
-     * @return the current value
-     */
     public long longValue() {
         return get();
     }
 
-    /**
-     * Returns the {@linkplain #get current value} as an {@code int}
-     * after a narrowing primitive conversion.
-     */
     public int intValue() {
         return (int)get();
     }
 
-    /**
-     * Returns the {@linkplain #get current value} as a {@code float}
-     * after a widening primitive conversion.
-     */
     public float floatValue() {
         return (float)get();
     }
 
-    /**
-     * Returns the {@linkplain #get current value} as a {@code double}
-     * after a widening primitive conversion.
-     */
     public double doubleValue() {
         return (double)get();
     }
 
-    /**
-     * Serialization proxy, used to avoid reference to the non-public
-     * Striped64 superclass in serialized forms.
-     * @serial include
-     */
     private static class SerializationProxy implements Serializable {
         private static final long serialVersionUID = 7249069246863182397L;
 
-        /**
-         * The current value returned by get().
-         * @serial
-         */
         private final long value;
-        /**
-         * The function used for updates.
-         * @serial
-         */
+
         private final LongBinaryOperator function;
-        /**
-         * The identity value
-         * @serial
-         */
+
         private final long identity;
 
         SerializationProxy(LongAccumulator a) {
@@ -215,13 +126,6 @@ public class LongAccumulator extends Striped64 implements Serializable {
             value = a.get();
         }
 
-        /**
-         * Returns a {@code LongAccumulator} object with initial state
-         * held by this proxy.
-         *
-         * @return a {@code LongAccumulator} object with initial state
-         * held by this proxy.
-         */
         private Object readResolve() {
             LongAccumulator a = new LongAccumulator(function, identity);
             a.base = value;
@@ -229,23 +133,10 @@ public class LongAccumulator extends Striped64 implements Serializable {
         }
     }
 
-    /**
-     * Returns a
-     * <a href="../../../../serialized-form.html#java.util.concurrent.atomic.LongAccumulator.SerializationProxy">
-     * SerializationProxy</a>
-     * representing the state of this instance.
-     *
-     * @return a {@link SerializationProxy}
-     * representing the state of this instance
-     */
     private Object writeReplace() {
         return new SerializationProxy(this);
     }
 
-    /**
-     * @param s the stream
-     * @throws java.io.InvalidObjectException always
-     */
     private void readObject(java.io.ObjectInputStream s)
         throws java.io.InvalidObjectException {
         throw new java.io.InvalidObjectException("Proxy required");

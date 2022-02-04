@@ -28,9 +28,8 @@ public class AtomicTest {
 
     @Test
     public void referenceTest(){
-        ThreadLocalRandom.current();
-        Thread thread = Thread.currentThread();
-        System.out.println(1);
+        double d = 1.421;
+        System.out.println(Double.doubleToRawLongBits(d));
     }
 
     @Test

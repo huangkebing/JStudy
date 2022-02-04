@@ -173,29 +173,25 @@ abstract class Striped64 extends Number {
     }
 
     /**
-     * Same as longAccumulate, but injecting long/double conversions
-     * in too many places to sensibly merge with long version, given
-     * the low-overhead requirements of this class. So must instead be
-     * maintained by copy/paste/adapt.
+     * 和longAccumulate逻辑一致，区别在于多了一步double转化为long的操作
      */
-    final void doubleAccumulate(double x, DoubleBinaryOperator fn,
-                                boolean wasUncontended) {
+    final void doubleAccumulate(double x, DoubleBinaryOperator fn, boolean wasUncontended) {
         int h;
         if ((h = getProbe()) == 0) {
-            ThreadLocalRandom.current(); // force initialization
+            ThreadLocalRandom.current();
             h = getProbe();
             wasUncontended = true;
         }
-        boolean collide = false;                // True if last slot nonempty
+        boolean collide = false;
         for (;;) {
             Cell[] as; Cell a; int n; long v;
             if ((as = cells) != null && (n = as.length) > 0) {
                 if ((a = as[(n - 1) & h]) == null) {
-                    if (cellsBusy == 0) {       // Try to attach new Cell
+                    if (cellsBusy == 0) {
                         Cell r = new Cell(Double.doubleToRawLongBits(x));
                         if (cellsBusy == 0 && casCellsBusy()) {
                             boolean created = false;
-                            try {               // Recheck under lock
+                            try {
                                 Cell[] rs; int m, j;
                                 if ((rs = cells) != null &&
                                     (m = rs.length) > 0 &&
@@ -208,13 +204,12 @@ abstract class Striped64 extends Number {
                             }
                             if (created)
                                 break;
-                            continue;           // Slot is now non-empty
+                            continue;
                         }
                     }
                     collide = false;
                 }
-                else if (!wasUncontended)       // CAS already known to fail
-                    wasUncontended = true;      // Continue after rehash
+                else if (!wasUncontended) wasUncontended = true;
                 else if (a.cas(v = a.value,
                                ((fn == null) ?
                                 Double.doubleToRawLongBits
@@ -224,12 +219,12 @@ abstract class Striped64 extends Number {
                                  (Double.longBitsToDouble(v), x)))))
                     break;
                 else if (n >= NCPU || cells != as)
-                    collide = false;            // At max size or stale
+                    collide = false;
                 else if (!collide)
                     collide = true;
                 else if (cellsBusy == 0 && casCellsBusy()) {
                     try {
-                        if (cells == as) {      // Expand table unless stale
+                        if (cells == as) {
                             Cell[] rs = new Cell[n << 1];
                             for (int i = 0; i < n; ++i)
                                 rs[i] = as[i];
@@ -239,13 +234,13 @@ abstract class Striped64 extends Number {
                         cellsBusy = 0;
                     }
                     collide = false;
-                    continue;                   // Retry with expanded table
+                    continue;
                 }
                 h = advanceProbe(h);
             }
             else if (cellsBusy == 0 && cells == as && casCellsBusy()) {
                 boolean init = false;
-                try {                           // Initialize table
+                try {
                     if (cells == as) {
                         Cell[] rs = new Cell[2];
                         rs[h & 1] = new Cell(Double.doubleToRawLongBits(x));
@@ -265,7 +260,7 @@ abstract class Striped64 extends Number {
                               Double.doubleToRawLongBits
                               (fn.applyAsDouble
                                (Double.longBitsToDouble(v), x)))))
-                break;                          // Fall back on using base
+                break;
         }
     }
 
