@@ -150,6 +150,7 @@ public abstract class AbstractQueuedSynchronizer extends AbstractOwnableSynchron
             for (;;) {
                 final Node p = node.predecessor();
                 // 如果前置结点为head，且尝试获取锁成功，将当前节点置为Head节点
+                // 不论是公平锁还是非公平锁，对于队列中的线程只能按照先后顺序获取锁
                 if (p == head && tryAcquire(arg)) {
                     setHead(node);
                     p.next = null; // help GC
