@@ -96,6 +96,7 @@ public class ReentrantLock implements Lock, java.io.Serializable {
      * 非公平锁实现类
      * 和公平锁最大的区别是：获取锁时不保证先后顺序，具体体现在以下几处：
      * 1. 执行lock方法是，非公平锁直接尝试CAS获取锁
+     * 2. tryAcquire方法，公平锁需要阻塞队列为空，或者为第一个节点，而非公平锁没有此限制
      */
     static final class NonfairSync extends Sync {
         private static final long serialVersionUID = 7316153563782823691L;
@@ -174,7 +175,7 @@ public class ReentrantLock implements Lock, java.io.Serializable {
     }
 
     /**
-     * 除非当前线程是interrupted，否则获取锁
+     * 获得锁方法，如果有中断标记则不获得锁而是抛出异常
      */
     public void lockInterruptibly() throws InterruptedException {
         sync.acquireInterruptibly(1);
@@ -188,10 +189,9 @@ public class ReentrantLock implements Lock, java.io.Serializable {
     }
 
     /**
-     * 带时间限制的tryLock()，若被别的线程占有，则等待至多unit时间，时间到了还没获取返回false
+     * 获得锁方法，线程有中断标记抛出异常，超过时间未获得锁则返回false
      */
-    public boolean tryLock(long timeout, TimeUnit unit)
-            throws InterruptedException {
+    public boolean tryLock(long timeout, TimeUnit unit) throws InterruptedException {
         return sync.tryAcquireNanos(1, unit.toNanos(timeout));
     }
 
