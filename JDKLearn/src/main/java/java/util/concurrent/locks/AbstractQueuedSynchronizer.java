@@ -56,14 +56,7 @@ public abstract class AbstractQueuedSynchronizer extends AbstractOwnableSynchron
         volatile Thread thread;
 
         /**
-         * Link to next node waiting on condition, or the special
-         * value SHARED.  Because condition queues are accessed only
-         * when holding in exclusive mode, we just need a simple
-         * linked queue to hold nodes while they are waiting on
-         * conditions. They are then transferred to the queue to
-         * re-acquire. And because conditions can only be exclusive,
-         * we save a field by using special value to indicate shared
-         * mode.
+         * condition保存下一个等待的节点，或者保存SHARED节点
          */
         Node nextWaiter;
 
@@ -92,7 +85,8 @@ public abstract class AbstractQueuedSynchronizer extends AbstractOwnableSynchron
             this.thread = thread;
         }
 
-        Node(Thread thread, int waitStatus) { // Used by Condition
+        // 有参构造，给condition使用
+        Node(Thread thread, int waitStatus) {
             this.waitStatus = waitStatus;
             this.thread = thread;
         }
@@ -1127,9 +1121,9 @@ public abstract class AbstractQueuedSynchronizer extends AbstractOwnableSynchron
      */
     public class ConditionObject implements Condition, java.io.Serializable {
         private static final long serialVersionUID = 1173984872572414699L;
-        /** First node of condition queue. */
+        /** condition 队列的head指针 */
         private transient Node firstWaiter;
-        /** Last node of condition queue. */
+        /** condition 队列的tail指针 */
         private transient Node lastWaiter;
 
         /**
@@ -1140,8 +1134,7 @@ public abstract class AbstractQueuedSynchronizer extends AbstractOwnableSynchron
         //------------内部的方法--------------
 
         /**
-         * Adds a new waiter to wait queue.
-         * @return its new wait node
+         * 创建一个condition等待Node
          */
         private Node addConditionWaiter() {
             Node t = lastWaiter;
@@ -1151,10 +1144,8 @@ public abstract class AbstractQueuedSynchronizer extends AbstractOwnableSynchron
                 t = lastWaiter;
             }
             Node node = new Node(Thread.currentThread(), Node.CONDITION);
-            if (t == null)
-                firstWaiter = node;
-            else
-                t.nextWaiter = node;
+            if (t == null) firstWaiter = node;
+            else t.nextWaiter = node; // 上一个节点的nextWaiter修改为当前node
             lastWaiter = node;
             return node;
         }
