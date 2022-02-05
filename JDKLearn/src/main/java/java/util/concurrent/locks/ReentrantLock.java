@@ -7,6 +7,8 @@ import java.util.concurrent.TimeUnit;
  * ReentrantLock，相比于synchronized有如下区别：
  * 1. 支持公平锁，通过构造器可以选择创建公平锁还是非公平锁
  * 2. 可以查询一些关于锁的信息
+ * 3. 可以结合Condition做到线程精准唤醒
+ * 4. 可中断获得锁
  */
 public class ReentrantLock implements Lock, java.io.Serializable {
     private static final long serialVersionUID = 7373984872572414699L;

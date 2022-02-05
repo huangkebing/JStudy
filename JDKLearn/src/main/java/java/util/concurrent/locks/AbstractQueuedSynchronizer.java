@@ -1123,19 +1123,7 @@ public abstract class AbstractQueuedSynchronizer extends AbstractOwnableSynchron
     }
 
     /**
-     * Condition implementation for a {@link
-     * AbstractQueuedSynchronizer} serving as the basis of a {@link
-     * Lock} implementation.
-     *
-     * <p>Method documentation for this class describes mechanics,
-     * not behavioral specifications from the point of view of Lock
-     * and Condition users. Exported versions of this class will in
-     * general need to be accompanied by documentation describing
-     * condition semantics that rely on those of the associated
-     * {@code AbstractQueuedSynchronizer}.
-     *
-     * <p>This class is Serializable, but all fields are transient,
-     * so deserialized conditions have no waiters.
+     * Condition实现类
      */
     public class ConditionObject implements Condition, java.io.Serializable {
         private static final long serialVersionUID = 1173984872572414699L;
@@ -1145,11 +1133,11 @@ public abstract class AbstractQueuedSynchronizer extends AbstractOwnableSynchron
         private transient Node lastWaiter;
 
         /**
-         * Creates a new {@code ConditionObject} instance.
+         * 构造器
          */
         public ConditionObject() { }
 
-        // Internal methods
+        //------------内部的方法--------------
 
         /**
          * Adds a new waiter to wait queue.
@@ -1234,7 +1222,7 @@ public abstract class AbstractQueuedSynchronizer extends AbstractOwnableSynchron
             }
         }
 
-        // public methods
+        //-----------公共的方法------------
 
         /**
          * Moves the longest-waiting thread, if one exists, from the
@@ -1327,17 +1315,7 @@ public abstract class AbstractQueuedSynchronizer extends AbstractOwnableSynchron
         }
 
         /**
-         * Implements interruptible condition wait.
-         * <ol>
-         * <li> If current thread is interrupted, throw InterruptedException.
-         * <li> Save lock state returned by {@link #getState}.
-         * <li> Invoke {@link #release} with saved state as argument,
-         *      throwing IllegalMonitorStateException if it fails.
-         * <li> Block until signalled or interrupted.
-         * <li> Reacquire by invoking specialized version of
-         *      {@link #acquire} with saved state as argument.
-         * <li> If interrupted while blocked in step 4, throw InterruptedException.
-         * </ol>
+         * await，无限期等待
          */
         public final void await() throws InterruptedException {
             if (Thread.interrupted())
