@@ -3,6 +3,7 @@ package com.hkb;
 import org.junit.Test;
 
 import java.util.concurrent.locks.ReentrantLock;
+import java.util.concurrent.locks.ReentrantReadWriteLock;
 
 /**
  * 多线程测试类
@@ -53,5 +54,11 @@ public class ThreadTest {
             System.out.println(Thread.currentThread().isInterrupted());
             lock.unlock();
         }).start();
+    }
+
+    @Test
+    public void readWriteLock(){
+        ReentrantReadWriteLock reentrantReadWriteLock = new ReentrantReadWriteLock();
+
     }
 }

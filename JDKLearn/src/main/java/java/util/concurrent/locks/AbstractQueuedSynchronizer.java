@@ -622,19 +622,10 @@ public abstract class AbstractQueuedSynchronizer extends AbstractOwnableSynchron
     }
 
     /**
-     * Acquires in shared mode, ignoring interrupts.  Implemented by
-     * first invoking at least once {@link #tryAcquireShared},
-     * returning on success.  Otherwise the thread is queued, possibly
-     * repeatedly blocking and unblocking, invoking {@link
-     * #tryAcquireShared} until success.
-     *
-     * @param arg the acquire argument.  This value is conveyed to
-     *        {@link #tryAcquireShared} but is otherwise uninterpreted
-     *        and can represent anything you like.
+     * 以共享模式获得锁
      */
     public final void acquireShared(int arg) {
-        if (tryAcquireShared(arg) < 0)
-            doAcquireShared(arg);
+        if (tryAcquireShared(arg) < 0) doAcquireShared(arg);
     }
 
     /**
