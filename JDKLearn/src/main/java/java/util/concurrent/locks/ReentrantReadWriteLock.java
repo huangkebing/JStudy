@@ -38,28 +38,20 @@ public class ReentrantReadWriteLock implements ReadWriteLock, java.io.Serializab
     public WriteLock writeLock() { return writerLock; }
     public ReadLock  readLock()  { return readerLock; }
 
-    /**
-     * Synchronization implementation for ReentrantReadWriteLock.
-     * Subclassed into fair and nonfair versions.
-     */
     abstract static class Sync extends AbstractQueuedSynchronizer {
         private static final long serialVersionUID = 6317671515068378041L;
 
-        /*
-         * Read vs write count extraction constants and functions.
-         * Lock state is logically divided into two unsigned shorts:
-         * The lower one representing the exclusive (writer) lock hold count,
-         * and the upper the shared (reader) hold count.
-         */
-
         static final int SHARED_SHIFT   = 16;
+        // 65536   1 0000 0000 0000 0000
         static final int SHARED_UNIT    = (1 << SHARED_SHIFT);
+        // 65535   1111 1111 1111 1111
         static final int MAX_COUNT      = (1 << SHARED_SHIFT) - 1;
+        // 65535   1111 1111 1111 1111
         static final int EXCLUSIVE_MASK = (1 << SHARED_SHIFT) - 1;
 
-        /** Returns the number of shared holds represented in count  */
+        /** state低16位为写锁信息，取读锁数量 要右移16位  */
         static int sharedCount(int c)    { return c >>> SHARED_SHIFT; }
-        /** Returns the number of exclusive holds represented in count  */
+        /** 取state低16位，写锁信息  */
         static int exclusiveCount(int c) { return c & EXCLUSIVE_MASK; }
 
         /**
@@ -395,9 +387,11 @@ public class ReentrantReadWriteLock implements ReadWriteLock, java.io.Serializab
             }
         }
 
+        /**
+         * 判断当前线程是否拥有写锁
+         */
         protected final boolean isHeldExclusively() {
-            // While we must in general read state before owner,
-            // we don't need to do so to check if current thread is owner
+            // true == 拥有
             return getExclusiveOwnerThread() == Thread.currentThread();
         }
 
@@ -422,6 +416,9 @@ public class ReentrantReadWriteLock implements ReadWriteLock, java.io.Serializab
             return exclusiveCount(getState()) != 0;
         }
 
+        /**
+         *
+         */
         final int getWriteHoldCount() {
             return isHeldExclusively() ? exclusiveCount(getState()) : 0;
         }
