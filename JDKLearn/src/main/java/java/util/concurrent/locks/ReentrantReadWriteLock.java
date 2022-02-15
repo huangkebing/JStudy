@@ -8,26 +8,22 @@ import java.util.concurrent.TimeUnit;
  */
 public class ReentrantReadWriteLock implements ReadWriteLock, java.io.Serializable {
     private static final long serialVersionUID = -6992448646407690164L;
-    /** Inner class providing readlock */
+    /** 读锁 */
     private final ReadLock readerLock;
-    /** Inner class providing writelock */
+    /** 写锁 */
     private final WriteLock writerLock;
-    /** Performs all synchronization mechanics */
+    /** 同步对象实例 */
     final Sync sync;
 
     /**
-     * Creates a new {@code ReentrantReadWriteLock} with
-     * default (nonfair) ordering properties.
+     * 无参构造，创建非公平锁
      */
     public ReentrantReadWriteLock() {
         this(false);
     }
 
     /**
-     * Creates a new {@code ReentrantReadWriteLock} with
-     * the given fairness policy.
-     *
-     * @param fair {@code true} if this lock should use a fair ordering policy
+     * 创建一个读写锁，有参构造，入参为true，则创建公平锁
      */
     public ReentrantReadWriteLock(boolean fair) {
         sync = fair ? new FairSync() : new NonfairSync();
@@ -49,7 +45,7 @@ public class ReentrantReadWriteLock implements ReadWriteLock, java.io.Serializab
         // 65535   1111 1111 1111 1111
         static final int EXCLUSIVE_MASK = (1 << SHARED_SHIFT) - 1;
 
-        /** state低16位为写锁信息，取读锁数量 要右移16位  */
+        /** state高16位为读锁信息，取读锁数量 要右移16位  */
         static int sharedCount(int c)    { return c >>> SHARED_SHIFT; }
         /** 取state低16位，写锁信息  */
         static int exclusiveCount(int c) { return c & EXCLUSIVE_MASK; }
@@ -248,9 +244,10 @@ public class ReentrantReadWriteLock implements ReadWriteLock, java.io.Serializab
              */
             Thread current = Thread.currentThread();
             int c = getState();
-            if (exclusiveCount(c) != 0 &&
-                getExclusiveOwnerThread() != current)
+            // 如果写锁被占用，且占用线程不是当前线程，获取失败，返回-1
+            if (exclusiveCount(c) != 0 && getExclusiveOwnerThread() != current)
                 return -1;
+            // 获得共享锁state
             int r = sharedCount(c);
             if (!readerShouldBlock() &&
                 r < MAX_COUNT &&
@@ -401,35 +398,33 @@ public class ReentrantReadWriteLock implements ReadWriteLock, java.io.Serializab
             return new ConditionObject();
         }
 
+        // 获得写锁的拥有线程
         final Thread getOwner() {
-            // Must read state before owner to ensure memory consistency
-            return ((exclusiveCount(getState()) == 0) ?
-                    null :
-                    getExclusiveOwnerThread());
+            // state 低16位 是否为0，为0返回null，否则返回占有线程
+            return ((exclusiveCount(getState()) == 0) ? null : getExclusiveOwnerThread());
         }
 
+        // 取state 高16位
         final int getReadLockCount() {
             return sharedCount(getState());
         }
 
+        // state 低16位 是否为0，为0表示写锁空闲
         final boolean isWriteLocked() {
             return exclusiveCount(getState()) != 0;
         }
 
-        /**
-         *
-         */
+        // 如果是当前拥有线程，获得独占锁拥有次数，否则返回0
         final int getWriteHoldCount() {
             return isHeldExclusively() ? exclusiveCount(getState()) : 0;
         }
 
         final int getReadHoldCount() {
-            if (getReadLockCount() == 0)
-                return 0;
+            // 如果独占锁次数为0，返回0
+            if (getReadLockCount() == 0) return 0;
 
             Thread current = Thread.currentThread();
-            if (firstReader == current)
-                return firstReaderHoldCount;
+            if (firstReader == current) return firstReaderHoldCount;
 
             HoldCounter rh = cachedHoldCounter;
             if (rh != null && rh.tid == getThreadId(current))
@@ -441,15 +436,15 @@ public class ReentrantReadWriteLock implements ReadWriteLock, java.io.Serializab
         }
 
         /**
-         * Reconstitutes the instance from a stream (that is, deserializes it).
+         * 反序列化方法
          */
-        private void readObject(java.io.ObjectInputStream s)
-            throws java.io.IOException, ClassNotFoundException {
+        private void readObject(java.io.ObjectInputStream s) throws java.io.IOException, ClassNotFoundException {
             s.defaultReadObject();
             readHolds = new ThreadLocalHoldCounter();
-            setState(0); // reset to unlocked state
+            setState(0);
         }
 
+        // 获得state字段
         final int getCount() { return getState(); }
     }
 
@@ -635,74 +630,42 @@ public class ReentrantReadWriteLock implements ReadWriteLock, java.io.Serializab
     }
 
     /**
-     * Returns the thread that currently owns the write lock, or
-     * {@code null} if not owned. When this method is called by a
-     * thread that is not the owner, the return value reflects a
-     * best-effort approximation of current lock status. For example,
-     * the owner may be momentarily {@code null} even if there are
-     * threads trying to acquire the lock but have not yet done so.
-     * This method is designed to facilitate construction of
-     * subclasses that provide more extensive lock monitoring
-     * facilities.
-     *
-     * @return the owner, or {@code null} if not owned
+     * 获得写锁的拥有线程，没有则返回null
      */
     protected Thread getOwner() {
         return sync.getOwner();
     }
 
     /**
-     * Queries the number of read locks held for this lock. This
-     * method is designed for use in monitoring system state, not for
-     * synchronization control.
-     * @return the number of read locks held
+     * 查询读锁的拥有次数
      */
     public int getReadLockCount() {
         return sync.getReadLockCount();
     }
 
     /**
-     * Queries if the write lock is held by any thread. This method is
-     * designed for use in monitoring system state, not for
-     * synchronization control.
-     *
-     * @return {@code true} if any thread holds the write lock and
-     *         {@code false} otherwise
+     * 查询读写锁，写锁是否空闲，true表示写锁不空闲
      */
     public boolean isWriteLocked() {
         return sync.isWriteLocked();
     }
 
     /**
-     * Queries if the write lock is held by the current thread.
-     *
-     * @return {@code true} if the current thread holds the write lock and
-     *         {@code false} otherwise
+     * 查询写锁是否被当前线程占用，true表示是
      */
     public boolean isWriteLockedByCurrentThread() {
         return sync.isHeldExclusively();
     }
 
     /**
-     * Queries the number of reentrant write holds on this lock by the
-     * current thread.  A writer thread has a hold on a lock for
-     * each lock action that is not matched by an unlock action.
-     *
-     * @return the number of holds on the write lock by the current thread,
-     *         or zero if the write lock is not held by the current thread
+     * 查询当前线程，获得独占锁拥有次数
      */
     public int getWriteHoldCount() {
         return sync.getWriteHoldCount();
     }
 
     /**
-     * Queries the number of reentrant read holds on this lock by the
-     * current thread.  A reader thread has a hold on a lock for
-     * each lock action that is not matched by an unlock action.
-     *
-     * @return the number of holds on the read lock by the current thread,
-     *         or zero if the read lock is not held by the current thread
-     * @since 1.6
+     * 查询当前线程，获得读锁的拥有次数
      */
     public int getReadHoldCount() {
         return sync.getReadHoldCount();
@@ -893,5 +856,4 @@ public class ReentrantReadWriteLock implements ReadWriteLock, java.io.Serializab
             throw new Error(e);
         }
     }
-
 }

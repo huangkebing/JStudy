@@ -1,7 +1,11 @@
 package com.hkb;
 
 import org.junit.Test;
+import sun.misc.Unsafe;
 
+import java.lang.reflect.Constructor;
+import java.lang.reflect.InvocationTargetException;
+import java.lang.reflect.Method;
 import java.util.concurrent.locks.ReentrantLock;
 import java.util.concurrent.locks.ReentrantReadWriteLock;
 
@@ -58,7 +62,31 @@ public class ThreadTest {
 
     @Test
     public void readWriteLock(){
-        ReentrantReadWriteLock reentrantReadWriteLock = new ReentrantReadWriteLock();
+        Class<Unsafe> unsafeClass = Unsafe.class;
+        try {
+            Constructor<Unsafe> constructor = unsafeClass.getDeclaredConstructor();
+            constructor.setAccessible(true);
+            Unsafe unsafe = constructor.newInstance();
+            TestAAA o = (TestAAA)unsafe.allocateInstance(TestAAA.class);
+            o.setA(1);
+            System.out.println(o.getA());
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
 
+
+    }
+
+
+
+}
+
+class TestAAA{
+    int a;
+    public int getA(){
+        return a;
+    }
+    public void setA(int a){
+        this.a = a;
     }
 }
