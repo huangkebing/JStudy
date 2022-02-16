@@ -50,22 +50,17 @@ public class ReentrantReadWriteLock implements ReadWriteLock, java.io.Serializab
         /** 取state低16位，写锁信息  */
         static int exclusiveCount(int c) { return c & EXCLUSIVE_MASK; }
 
-        /**
-         * A counter for per-thread read hold counts.
-         * Maintained as a ThreadLocal; cached in cachedHoldCounter
-         */
+        // 每个线程的读锁计数器
         static final class HoldCounter {
             int count = 0;
-            // Use id, not reference, to avoid garbage retention
-            final long tid = getThreadId(Thread.currentThread());
+            final long tid = getThreadId(Thread.currentThread());//使用tid，避免垃圾保留
         }
 
         /**
          * ThreadLocal subclass. Easiest to explicitly define for sake
          * of deserialization mechanics.
          */
-        static final class ThreadLocalHoldCounter
-            extends ThreadLocal<HoldCounter> {
+        static final class ThreadLocalHoldCounter extends ThreadLocal<HoldCounter> {
             public HoldCounter initialValue() {
                 return new HoldCounter();
             }
@@ -78,20 +73,7 @@ public class ReentrantReadWriteLock implements ReadWriteLock, java.io.Serializab
          */
         private transient ThreadLocalHoldCounter readHolds;
 
-        /**
-         * The hold count of the last thread to successfully acquire
-         * readLock. This saves ThreadLocal lookup in the common case
-         * where the next thread to release is the last one to
-         * acquire. This is non-volatile since it is just used
-         * as a heuristic, and would be great for threads to cache.
-         *
-         * <p>Can outlive the Thread for which it is caching the read
-         * hold count, but avoids garbage retention by not retaining a
-         * reference to the Thread.
-         *
-         * <p>Accessed via a benign data race; relies on the memory
-         * model's final field and out-of-thin-air guarantees.
-         */
+        // 最后一个获得读锁的线程的计数器
         private transient HoldCounter cachedHoldCounter;
 
         /**
@@ -249,13 +231,14 @@ public class ReentrantReadWriteLock implements ReadWriteLock, java.io.Serializab
                 return -1;
             // 获得共享锁state
             int r = sharedCount(c);
-            if (!readerShouldBlock() &&
-                r < MAX_COUNT &&
-                compareAndSetState(c, c + SHARED_UNIT)) {
+            // 如果可以获得读锁，且读锁拥有次数小于最大值，且CAS交换state成功，视为获得读锁
+            if (!readerShouldBlock() && r < MAX_COUNT && compareAndSetState(c, c + SHARED_UNIT)) {
+                // 如果r为0，线程设为firstReader，holdCount为1
                 if (r == 0) {
                     firstReader = current;
                     firstReaderHoldCount = 1;
                 } else if (firstReader == current) {
+                    // 如果firstReader是当前线程，但r不为0，holdCount+1
                     firstReaderHoldCount++;
                 } else {
                     HoldCounter rh = cachedHoldCounter;
