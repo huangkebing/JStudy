@@ -1,38 +1,3 @@
-/*
- * ORACLE PROPRIETARY/CONFIDENTIAL. Use is subject to license terms.
- *
- *
- *
- *
- *
- *
- *
- *
- *
- *
- *
- *
- *
- *
- *
- *
- *
- *
- *
- *
- */
-
-/*
- *
- *
- *
- *
- *
- * Written by Doug Lea with assistance from members of JCP JSR-166
- * Expert Group and released to the public domain, as explained at
- * http://creativecommons.org/publicdomain/zero/1.0/
- */
-
 package java.util.concurrent;
 import java.util.concurrent.locks.AbstractQueuedSynchronizer;
 
@@ -189,11 +154,7 @@ public class CountDownLatch {
     private final Sync sync;
 
     /**
-     * Constructs a {@code CountDownLatch} initialized with the given count.
-     *
-     * @param count the number of times {@link #countDown} must be invoked
-     *        before threads can pass through {@link #await}
-     * @throws IllegalArgumentException if {@code count} is negative
+     * 构造器，给定一个正整数，设置为sync的state，即倒数计数器的初始值
      */
     public CountDownLatch(int count) {
         if (count < 0) throw new IllegalArgumentException("count < 0");
