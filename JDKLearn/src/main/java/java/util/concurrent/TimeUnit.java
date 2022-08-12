@@ -34,9 +34,6 @@ package java.util.concurrent;
  * @author Doug Lea
  */
 public enum TimeUnit {
-    /**
-     * Time unit representing one thousandth of a microsecond
-     */
     NANOSECONDS {
         public long toNanos(long d)   { return d; }
         public long toMicros(long d)  { return d/(C1/C0); }
@@ -49,9 +46,6 @@ public enum TimeUnit {
         int excessNanos(long d, long m) { return (int)(d - (m*C2)); }
     },
 
-    /**
-     * Time unit representing one thousandth of a millisecond
-     */
     MICROSECONDS {
         public long toNanos(long d)   { return x(d, C1/C0, MAX/(C1/C0)); }
         public long toMicros(long d)  { return d; }
@@ -64,9 +58,6 @@ public enum TimeUnit {
         int excessNanos(long d, long m) { return (int)((d*C1) - (m*C2)); }
     },
 
-    /**
-     * Time unit representing one thousandth of a second
-     */
     MILLISECONDS {
         public long toNanos(long d)   { return x(d, C2/C0, MAX/(C2/C0)); }
         public long toMicros(long d)  { return x(d, C2/C1, MAX/(C2/C1)); }
@@ -79,9 +70,6 @@ public enum TimeUnit {
         int excessNanos(long d, long m) { return 0; }
     },
 
-    /**
-     * Time unit representing one second
-     */
     SECONDS {
         public long toNanos(long d)   { return x(d, C3/C0, MAX/(C3/C0)); }
         public long toMicros(long d)  { return x(d, C3/C1, MAX/(C3/C1)); }
@@ -94,9 +82,6 @@ public enum TimeUnit {
         int excessNanos(long d, long m) { return 0; }
     },
 
-    /**
-     * Time unit representing sixty seconds
-     */
     MINUTES {
         public long toNanos(long d)   { return x(d, C4/C0, MAX/(C4/C0)); }
         public long toMicros(long d)  { return x(d, C4/C1, MAX/(C4/C1)); }
@@ -109,9 +94,6 @@ public enum TimeUnit {
         int excessNanos(long d, long m) { return 0; }
     },
 
-    /**
-     * Time unit representing sixty minutes
-     */
     HOURS {
         public long toNanos(long d)   { return x(d, C5/C0, MAX/(C5/C0)); }
         public long toMicros(long d)  { return x(d, C5/C1, MAX/(C5/C1)); }
@@ -124,9 +106,6 @@ public enum TimeUnit {
         int excessNanos(long d, long m) { return 0; }
     },
 
-    /**
-     * Time unit representing twenty four hours
-     */
     DAYS {
         public long toNanos(long d)   { return x(d, C6/C0, MAX/(C6/C0)); }
         public long toMicros(long d)  { return x(d, C6/C1, MAX/(C6/C1)); }
@@ -135,24 +114,35 @@ public enum TimeUnit {
         public long toMinutes(long d) { return x(d, C6/C4, MAX/(C6/C4)); }
         public long toHours(long d)   { return x(d, C6/C5, MAX/(C6/C5)); }
         public long toDays(long d)    { return d; }
+        /**
+         * 时间换算方法
+         * 如 DAYS.convert(48, TimeUnit.HOURS) 即为48小时转化为天为单位 返回2
+         */
         public long convert(long d, TimeUnit u) { return u.toDays(d); }
         int excessNanos(long d, long m) { return 0; }
     };
 
-    // Handy constants for conversion methods
+    // 时间常量，以纳秒为单位
+    // 1纳秒
     static final long C0 = 1L;
+    // 1微秒
     static final long C1 = C0 * 1000L;
+    // 1毫秒
     static final long C2 = C1 * 1000L;
+    // 1秒
     static final long C3 = C2 * 1000L;
+    // 1分钟
     static final long C4 = C3 * 60L;
+    // 1小时
     static final long C5 = C4 * 60L;
+    // 1天
     static final long C6 = C5 * 24L;
-
     static final long MAX = Long.MAX_VALUE;
 
     /**
-     * Scale d by m, checking for overflow.
-     * This has a short name to make above code more readable.
+     * 时间单位转化方法
+     * 如DAYS中toHours,则入参为 d = 1，m = C6/C5=24，over = MAX/m；返回值为24
+     * d需要乘以m，over字段为MAX/m，保证了 d*m不超过Long的最大值
      */
     static long x(long d, long m, long over) {
         if (d >  over) return Long.MAX_VALUE;
@@ -165,24 +155,6 @@ public enum TimeUnit {
     // enum classes should not be listed as abstract), method convert
     // etc. are not declared abstract but otherwise act as abstract methods.
 
-    /**
-     * Converts the given time duration in the given unit to this unit.
-     * Conversions from finer to coarser granularities truncate, so
-     * lose precision. For example, converting {@code 999} milliseconds
-     * to seconds results in {@code 0}. Conversions from coarser to
-     * finer granularities with arguments that would numerically
-     * overflow saturate to {@code Long.MIN_VALUE} if negative or
-     * {@code Long.MAX_VALUE} if positive.
-     *
-     * <p>For example, to convert 10 minutes to milliseconds, use:
-     * {@code TimeUnit.MILLISECONDS.convert(10L, TimeUnit.MINUTES)}
-     *
-     * @param sourceDuration the time duration in the given {@code sourceUnit}
-     * @param sourceUnit the unit of the {@code sourceDuration} argument
-     * @return the converted duration in this unit,
-     * or {@code Long.MIN_VALUE} if conversion would negatively
-     * overflow, or {@code Long.MAX_VALUE} if it would positively overflow.
-     */
     public long convert(long sourceDuration, TimeUnit sourceUnit) {
         throw new AbstractMethodError();
     }
@@ -210,53 +182,15 @@ public enum TimeUnit {
     public long toMicros(long duration) {
         throw new AbstractMethodError();
     }
-
-    /**
-     * Equivalent to
-     * {@link #convert(long, TimeUnit) MILLISECONDS.convert(duration, this)}.
-     * @param duration the duration
-     * @return the converted duration,
-     * or {@code Long.MIN_VALUE} if conversion would negatively
-     * overflow, or {@code Long.MAX_VALUE} if it would positively overflow.
-     */
     public long toMillis(long duration) {
         throw new AbstractMethodError();
     }
-
-    /**
-     * Equivalent to
-     * {@link #convert(long, TimeUnit) SECONDS.convert(duration, this)}.
-     * @param duration the duration
-     * @return the converted duration,
-     * or {@code Long.MIN_VALUE} if conversion would negatively
-     * overflow, or {@code Long.MAX_VALUE} if it would positively overflow.
-     */
     public long toSeconds(long duration) {
         throw new AbstractMethodError();
     }
-
-    /**
-     * Equivalent to
-     * {@link #convert(long, TimeUnit) MINUTES.convert(duration, this)}.
-     * @param duration the duration
-     * @return the converted duration,
-     * or {@code Long.MIN_VALUE} if conversion would negatively
-     * overflow, or {@code Long.MAX_VALUE} if it would positively overflow.
-     * @since 1.6
-     */
     public long toMinutes(long duration) {
         throw new AbstractMethodError();
     }
-
-    /**
-     * Equivalent to
-     * {@link #convert(long, TimeUnit) HOURS.convert(duration, this)}.
-     * @param duration the duration
-     * @return the converted duration,
-     * or {@code Long.MIN_VALUE} if conversion would negatively
-     * overflow, or {@code Long.MAX_VALUE} if it would positively overflow.
-     * @since 1.6
-     */
     public long toHours(long duration) {
         throw new AbstractMethodError();
     }
