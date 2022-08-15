@@ -1,38 +1,5 @@
 package java.util.concurrent;
 
-/**
- * A {@code TimeUnit} represents time durations at a given unit of
- * granularity and provides utility methods to convert across units,
- * and to perform timing and delay operations in these units.  A
- * {@code TimeUnit} does not maintain time information, but only
- * helps organize and use time representations that may be maintained
- * separately across various contexts.  A nanosecond is defined as one
- * thousandth of a microsecond, a microsecond as one thousandth of a
- * millisecond, a millisecond as one thousandth of a second, a minute
- * as sixty seconds, an hour as sixty minutes, and a day as twenty four
- * hours.
- *
- * <p>A {@code TimeUnit} is mainly used to inform time-based methods
- * how a given timing parameter should be interpreted. For example,
- * the following code will timeout in 50 milliseconds if the {@link
- * java.util.concurrent.locks.Lock lock} is not available:
- *
- *  <pre> {@code
- * Lock lock = ...;
- * if (lock.tryLock(50L, TimeUnit.MILLISECONDS)) ...}</pre>
- *
- * while this code will timeout in 50 seconds:
- *  <pre> {@code
- * Lock lock = ...;
- * if (lock.tryLock(50L, TimeUnit.SECONDS)) ...}</pre>
- *
- * Note however, that there is no guarantee that a particular timeout
- * implementation will be able to notice the passage of time at the
- * same granularity as the given {@code TimeUnit}.
- *
- * @since 1.5
- * @author Doug Lea
- */
 public enum TimeUnit {
     NANOSECONDS {
         public long toNanos(long d)   { return d; }
@@ -114,10 +81,6 @@ public enum TimeUnit {
         public long toMinutes(long d) { return x(d, C6/C4, MAX/(C6/C4)); }
         public long toHours(long d)   { return x(d, C6/C5, MAX/(C6/C5)); }
         public long toDays(long d)    { return d; }
-        /**
-         * 时间换算方法
-         * 如 DAYS.convert(48, TimeUnit.HOURS) 即为48小时转化为天为单位 返回2
-         */
         public long convert(long d, TimeUnit u) { return u.toDays(d); }
         int excessNanos(long d, long m) { return 0; }
     };
@@ -150,35 +113,17 @@ public enum TimeUnit {
         return d * m;
     }
 
-    // To maintain full signature compatibility with 1.5, and to improve the
-    // clarity of the generated javadoc (see 6287639: Abstract methods in
-    // enum classes should not be listed as abstract), method convert
-    // etc. are not declared abstract but otherwise act as abstract methods.
-
+    /**
+     * 时间换算方法
+     * 如 DAYS.convert(48, TimeUnit.HOURS) 即为48小时转化为天为单位 返回2
+     */
     public long convert(long sourceDuration, TimeUnit sourceUnit) {
         throw new AbstractMethodError();
     }
 
-    /**
-     * Equivalent to
-     * {@link #convert(long, TimeUnit) NANOSECONDS.convert(duration, this)}.
-     * @param duration the duration
-     * @return the converted duration,
-     * or {@code Long.MIN_VALUE} if conversion would negatively
-     * overflow, or {@code Long.MAX_VALUE} if it would positively overflow.
-     */
     public long toNanos(long duration) {
         throw new AbstractMethodError();
     }
-
-    /**
-     * Equivalent to
-     * {@link #convert(long, TimeUnit) MICROSECONDS.convert(duration, this)}.
-     * @param duration the duration
-     * @return the converted duration,
-     * or {@code Long.MIN_VALUE} if conversion would negatively
-     * overflow, or {@code Long.MAX_VALUE} if it would positively overflow.
-     */
     public long toMicros(long duration) {
         throw new AbstractMethodError();
     }
@@ -194,50 +139,18 @@ public enum TimeUnit {
     public long toHours(long duration) {
         throw new AbstractMethodError();
     }
-
-    /**
-     * Equivalent to
-     * {@link #convert(long, TimeUnit) DAYS.convert(duration, this)}.
-     * @param duration the duration
-     * @return the converted duration
-     * @since 1.6
-     */
     public long toDays(long duration) {
         throw new AbstractMethodError();
     }
 
     /**
-     * Utility to compute the excess-nanosecond argument to wait,
-     * sleep, join.
-     * @param d the duration
-     * @param m the number of milliseconds
-     * @return the number of nanoseconds
+     * 将毫秒以下 转化为纳秒
+     * 毫秒以上单位 返回0
      */
     abstract int excessNanos(long d, long m);
 
     /**
-     * Performs a timed {@link Object#wait(long, int) Object.wait}
-     * using this time unit.
-     * This is a convenience method that converts timeout arguments
-     * into the form required by the {@code Object.wait} method.
-     *
-     * <p>For example, you could implement a blocking {@code poll}
-     * method (see {@link BlockingQueue#poll BlockingQueue.poll})
-     * using:
-     *
-     *  <pre> {@code
-     * public synchronized Object poll(long timeout, TimeUnit unit)
-     *     throws InterruptedException {
-     *   while (empty) {
-     *     unit.timedWait(this, timeout);
-     *     ...
-     *   }
-     * }}</pre>
-     *
-     * @param obj the object to wait on
-     * @param timeout the maximum time to wait. If less than
-     * or equal to zero, do not wait at all.
-     * @throws InterruptedException if interrupted while waiting
+     * wait
      */
     public void timedWait(Object obj, long timeout)
             throws InterruptedException {
@@ -249,15 +162,7 @@ public enum TimeUnit {
     }
 
     /**
-     * Performs a timed {@link Thread#join(long, int) Thread.join}
-     * using this time unit.
-     * This is a convenience method that converts time arguments into the
-     * form required by the {@code Thread.join} method.
-     *
-     * @param thread the thread to wait for
-     * @param timeout the maximum time to wait. If less than
-     * or equal to zero, do not wait at all.
-     * @throws InterruptedException if interrupted while waiting
+     * join
      */
     public void timedJoin(Thread thread, long timeout)
             throws InterruptedException {
@@ -269,21 +174,15 @@ public enum TimeUnit {
     }
 
     /**
-     * Performs a {@link Thread#sleep(long, int) Thread.sleep} using
-     * this time unit.
-     * This is a convenience method that converts time arguments into the
-     * form required by the {@code Thread.sleep} method.
-     *
-     * @param timeout the minimum time to sleep. If less than
-     * or equal to zero, do not sleep at all.
-     * @throws InterruptedException if interrupted while sleeping
+     * sleep
      */
     public void sleep(long timeout) throws InterruptedException {
         if (timeout > 0) {
+            // 以毫秒划分，往上部分转化为毫秒
             long ms = toMillis(timeout);
+            // 毫秒以下转化为纳秒
             int ns = excessNanos(timeout, ms);
             Thread.sleep(ms, ns);
         }
     }
-
 }
