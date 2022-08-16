@@ -9,7 +9,7 @@ import java.util.List;
 public class ListTest {
 
     @Test
-    public void toArrayTest(){
+    public void toArrayReturnTest(){
         /*
             [1, 2]
             class [Ljava.lang.String;
@@ -41,5 +41,41 @@ public class ListTest {
         Object[] newArray = newList.toArray();
         System.out.println(Arrays.toString(newArray));
         System.out.println(newArray.getClass());
+    }
+
+    /**
+     * List.toArray(T[] a)方法
+     * 返回T[]，若a.length > list的size，将下标=size元素赋null
+     */
+    @Test
+    public void toArrayTest(){
+        List<String> list = new ArrayList<>();
+        // List<String> list = new CopyOnWriteArrayList<>();
+        list.add("1");
+        list.add("2");
+        list.add("3");
+        String[] array1 = {"10", "11"};
+        String[] array2 = {"20", "21", "22", "23", "24"};
+        // [1, 2, 3]
+        System.out.println(Arrays.toString(list.toArray(array1)));
+        // [1, 2, 3, null, 24]
+        System.out.println(Arrays.toString(list.toArray(array2)));
+    }
+
+    /**
+     * label:{} 定义标签，用于逻辑跳转
+     */
+    @Test
+    public void goToTest(){
+        label:{
+            for (int i = 0; i < 10; i++) {
+                for (int j = 0; j < 8; j++) {
+                    System.out.println(j);
+                    if (j % 2 != 0) {
+                        break label;
+                    }
+                }
+            }
+        }
     }
 }

@@ -103,6 +103,7 @@ public class CopyOnWriteArrayList<E> implements List<E>, RandomAccess, Cloneable
         setArray(Arrays.copyOf(toCopyIn, toCopyIn.length, Object[].class));
     }
 
+    //-------------List通用方法-------------
     public int size() {
         return getArray().length;
     }
@@ -110,22 +111,13 @@ public class CopyOnWriteArrayList<E> implements List<E>, RandomAccess, Cloneable
     public boolean isEmpty() {
         return size() == 0;
     }
-
-    /**
-     * Tests for equality, coping with nulls.
-     */
     private static boolean eq(Object o1, Object o2) {
         return (o1 == null) ? o2 == null : o1.equals(o2);
     }
 
     /**
-     * static version of indexOf, to allow repeated calls without
-     * needing to re-acquire array each time.
-     * @param o element to search for
-     * @param elements the array
-     * @param index first index to search
-     * @param fence one past last index to search
-     * @return index of element, or -1 if absent
+     * 对象o 是否在数组elements的下标[index,fence)中
+     * 若存在返回下标i，否则返回-1
      */
     private static int indexOf(Object o, Object[] elements,
                                int index, int fence) {
@@ -142,11 +134,8 @@ public class CopyOnWriteArrayList<E> implements List<E>, RandomAccess, Cloneable
     }
 
     /**
-     * static version of lastIndexOf.
-     * @param o element to search for
-     * @param elements the array
-     * @param index first index to search
-     * @return index of element, or -1 if absent
+     * 查找o在elements的下标[0,index]中 最后一次出现的下标i
+     * 不存在返回-1
      */
     private static int lastIndexOf(Object o, Object[] elements, int index) {
         if (o == null) {
@@ -160,83 +149,33 @@ public class CopyOnWriteArrayList<E> implements List<E>, RandomAccess, Cloneable
         }
         return -1;
     }
-
-    /**
-     * Returns {@code true} if this list contains the specified element.
-     * More formally, returns {@code true} if and only if this list contains
-     * at least one element {@code e} such that
-     * <tt>(o==null&nbsp;?&nbsp;e==null&nbsp;:&nbsp;o.equals(e))</tt>.
-     *
-     * @param o element whose presence in this list is to be tested
-     * @return {@code true} if this list contains the specified element
-     */
     public boolean contains(Object o) {
         Object[] elements = getArray();
         return indexOf(o, elements, 0, elements.length) >= 0;
     }
-
-    /**
-     * {@inheritDoc}
-     */
     public int indexOf(Object o) {
         Object[] elements = getArray();
         return indexOf(o, elements, 0, elements.length);
     }
 
     /**
-     * Returns the index of the first occurrence of the specified element in
-     * this list, searching forwards from {@code index}, or returns -1 if
-     * the element is not found.
-     * More formally, returns the lowest index {@code i} such that
-     * <tt>(i&nbsp;&gt;=&nbsp;index&nbsp;&amp;&amp;&nbsp;(e==null&nbsp;?&nbsp;get(i)==null&nbsp;:&nbsp;e.equals(get(i))))</tt>,
-     * or -1 if there is no such index.
-     *
-     * @param e element to search for
-     * @param index index to start searching from
-     * @return the index of the first occurrence of the element in
-     *         this list at position {@code index} or later in the list;
-     *         {@code -1} if the element is not found.
-     * @throws IndexOutOfBoundsException if the specified index is negative
+     * 查找元素e，在list中[index,size)中第一次出现的位置，不存在返回-1
      */
     public int indexOf(E e, int index) {
         Object[] elements = getArray();
         return indexOf(e, elements, index, elements.length);
     }
-
-    /**
-     * {@inheritDoc}
-     */
     public int lastIndexOf(Object o) {
         Object[] elements = getArray();
         return lastIndexOf(o, elements, elements.length - 1);
     }
-
-    /**
-     * Returns the index of the last occurrence of the specified element in
-     * this list, searching backwards from {@code index}, or returns -1 if
-     * the element is not found.
-     * More formally, returns the highest index {@code i} such that
-     * <tt>(i&nbsp;&lt;=&nbsp;index&nbsp;&amp;&amp;&nbsp;(e==null&nbsp;?&nbsp;get(i)==null&nbsp;:&nbsp;e.equals(get(i))))</tt>,
-     * or -1 if there is no such index.
-     *
-     * @param e element to search for
-     * @param index index to start searching backwards from
-     * @return the index of the last occurrence of the element at position
-     *         less than or equal to {@code index} in this list;
-     *         -1 if the element is not found.
-     * @throws IndexOutOfBoundsException if the specified index is greater
-     *         than or equal to the current size of this list
-     */
     public int lastIndexOf(E e, int index) {
         Object[] elements = getArray();
         return lastIndexOf(e, elements, index);
     }
 
     /**
-     * Returns a shallow copy of this list.  (The elements themselves
-     * are not copied.)
-     *
-     * @return a clone of this list
+     * 浅拷贝
      */
     public Object clone() {
         try {
@@ -250,62 +189,13 @@ public class CopyOnWriteArrayList<E> implements List<E>, RandomAccess, Cloneable
             throw new InternalError();
         }
     }
-
-    /**
-     * Returns an array containing all of the elements in this list
-     * in proper sequence (from first to last element).
-     *
-     * <p>The returned array will be "safe" in that no references to it are
-     * maintained by this list.  (In other words, this method must allocate
-     * a new array).  The caller is thus free to modify the returned array.
-     *
-     * <p>This method acts as bridge between array-based and collection-based
-     * APIs.
-     *
-     * @return an array containing all the elements in this list
-     */
     public Object[] toArray() {
         Object[] elements = getArray();
         return Arrays.copyOf(elements, elements.length);
     }
 
     /**
-     * Returns an array containing all of the elements in this list in
-     * proper sequence (from first to last element); the runtime type of
-     * the returned array is that of the specified array.  If the list fits
-     * in the specified array, it is returned therein.  Otherwise, a new
-     * array is allocated with the runtime type of the specified array and
-     * the size of this list.
-     *
-     * <p>If this list fits in the specified array with room to spare
-     * (i.e., the array has more elements than this list), the element in
-     * the array immediately following the end of the list is set to
-     * {@code null}.  (This is useful in determining the length of this
-     * list <i>only</i> if the caller knows that this list does not contain
-     * any null elements.)
-     *
-     * <p>Like the {@link #toArray()} method, this method acts as bridge between
-     * array-based and collection-based APIs.  Further, this method allows
-     * precise control over the runtime type of the output array, and may,
-     * under certain circumstances, be used to save allocation costs.
-     *
-     * <p>Suppose {@code x} is a list known to contain only strings.
-     * The following code can be used to dump the list into a newly
-     * allocated array of {@code String}:
-     *
-     *  <pre> {@code String[] y = x.toArray(new String[0]);}</pre>
-     *
-     * Note that {@code toArray(new Object[0])} is identical in function to
-     * {@code toArray()}.
-     *
-     * @param a the array into which the elements of the list are to
-     *          be stored, if it is big enough; otherwise, a new array of the
-     *          same runtime type is allocated for this purpose.
-     * @return an array containing all the elements in this list
-     * @throws ArrayStoreException if the runtime type of the specified array
-     *         is not a supertype of the runtime type of every element in
-     *         this list
-     * @throws NullPointerException if the specified array is null
+     * 将list array中的元素 复制到a中，若a.length > elements.length，将下标=size元素赋null
      */
     @SuppressWarnings("unchecked")
     public <T> T[] toArray(T a[]) {
@@ -321,42 +211,30 @@ public class CopyOnWriteArrayList<E> implements List<E>, RandomAccess, Cloneable
         }
     }
 
-    // Positional Access Operations
+    // 元素操作方法，读方法直接执行
 
     @SuppressWarnings("unchecked")
     private E get(Object[] a, int index) {
         return (E) a[index];
     }
 
-    /**
-     * {@inheritDoc}
-     *
-     * @throws IndexOutOfBoundsException {@inheritDoc}
-     */
     public E get(int index) {
         return get(getArray(), index);
     }
 
-    /**
-     * Replaces the element at the specified position in this list with the
-     * specified element.
-     *
-     * @throws IndexOutOfBoundsException {@inheritDoc}
-     */
     public E set(int index, E element) {
         final ReentrantLock lock = this.lock;
         lock.lock();
         try {
             Object[] elements = getArray();
             E oldValue = get(elements, index);
-
+            // 复制一个新数组，将元素替换在新数组中，set回去
             if (oldValue != element) {
                 int len = elements.length;
                 Object[] newElements = Arrays.copyOf(elements, len);
                 newElements[index] = element;
                 setArray(newElements);
             } else {
-                // Not quite a no-op; ensures volatile write semantics
                 setArray(elements);
             }
             return oldValue;
@@ -365,18 +243,13 @@ public class CopyOnWriteArrayList<E> implements List<E>, RandomAccess, Cloneable
         }
     }
 
-    /**
-     * Appends the specified element to the end of this list.
-     *
-     * @param e element to be appended to this list
-     * @return {@code true} (as specified by {@link Collection#add})
-     */
     public boolean add(E e) {
         final ReentrantLock lock = this.lock;
         lock.lock();
         try {
             Object[] elements = getArray();
             int len = elements.length;
+            // 创建新数组，长度为原长度 + 1
             Object[] newElements = Arrays.copyOf(elements, len + 1);
             newElements[len] = e;
             setArray(newElements);
@@ -386,13 +259,6 @@ public class CopyOnWriteArrayList<E> implements List<E>, RandomAccess, Cloneable
         }
     }
 
-    /**
-     * Inserts the specified element at the specified position in this
-     * list. Shifts the element currently at that position (if any) and
-     * any subsequent elements to the right (adds one to their indices).
-     *
-     * @throws IndexOutOfBoundsException {@inheritDoc}
-     */
     public void add(int index, E element) {
         final ReentrantLock lock = this.lock;
         lock.lock();
@@ -400,17 +266,17 @@ public class CopyOnWriteArrayList<E> implements List<E>, RandomAccess, Cloneable
             Object[] elements = getArray();
             int len = elements.length;
             if (index > len || index < 0)
-                throw new IndexOutOfBoundsException("Index: "+index+
-                                                    ", Size: "+len);
+                throw new IndexOutOfBoundsException("Index: " + index + ", Size: " + len);
             Object[] newElements;
             int numMoved = len - index;
             if (numMoved == 0)
+                // index在elements末尾，可以直接拷贝数组
                 newElements = Arrays.copyOf(elements, len + 1);
             else {
+                // 否则，数组分两段复制
                 newElements = new Object[len + 1];
                 System.arraycopy(elements, 0, newElements, 0, index);
-                System.arraycopy(elements, index, newElements, index + 1,
-                                 numMoved);
+                System.arraycopy(elements, index, newElements, index + 1, numMoved);
             }
             newElements[index] = element;
             setArray(newElements);
@@ -419,13 +285,6 @@ public class CopyOnWriteArrayList<E> implements List<E>, RandomAccess, Cloneable
         }
     }
 
-    /**
-     * Removes the element at the specified position in this list.
-     * Shifts any subsequent elements to the left (subtracts one from their
-     * indices).  Returns the element that was removed from the list.
-     *
-     * @throws IndexOutOfBoundsException {@inheritDoc}
-     */
     public E remove(int index) {
         final ReentrantLock lock = this.lock;
         lock.lock();
@@ -496,9 +355,7 @@ public class CopyOnWriteArrayList<E> implements List<E>, RandomAccess, Cloneable
             }
             Object[] newElements = new Object[len - 1];
             System.arraycopy(current, 0, newElements, 0, index);
-            System.arraycopy(current, index + 1,
-                             newElements, index,
-                             len - index - 1);
+            System.arraycopy(current, index + 1, newElements, index, len - index - 1);
             setArray(newElements);
             return true;
         } finally {
