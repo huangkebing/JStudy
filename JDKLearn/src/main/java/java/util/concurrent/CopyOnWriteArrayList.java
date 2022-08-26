@@ -308,29 +308,12 @@ public class CopyOnWriteArrayList<E> implements List<E>, RandomAccess, Cloneable
         }
     }
 
-    /**
-     * Removes the first occurrence of the specified element from this list,
-     * if it is present.  If this list does not contain the element, it is
-     * unchanged.  More formally, removes the element with the lowest index
-     * {@code i} such that
-     * <tt>(o==null&nbsp;?&nbsp;get(i)==null&nbsp;:&nbsp;o.equals(get(i)))</tt>
-     * (if such an element exists).  Returns {@code true} if this list
-     * contained the specified element (or equivalently, if this list
-     * changed as a result of the call).
-     *
-     * @param o element to be removed from this list, if present
-     * @return {@code true} if this list contained the specified element
-     */
     public boolean remove(Object o) {
         Object[] snapshot = getArray();
         int index = indexOf(o, snapshot, 0, snapshot.length);
         return (index < 0) ? false : remove(o, snapshot, index);
     }
 
-    /**
-     * A version of remove(Object) using the strong hint that given
-     * recent snapshot contains o at the given index.
-     */
     private boolean remove(Object o, Object[] snapshot, int index) {
         final ReentrantLock lock = this.lock;
         lock.lock();
@@ -363,18 +346,6 @@ public class CopyOnWriteArrayList<E> implements List<E>, RandomAccess, Cloneable
         }
     }
 
-    /**
-     * Removes from this list all of the elements whose index is between
-     * {@code fromIndex}, inclusive, and {@code toIndex}, exclusive.
-     * Shifts any succeeding elements to the left (reduces their index).
-     * This call shortens the list by {@code (toIndex - fromIndex)} elements.
-     * (If {@code toIndex==fromIndex}, this operation has no effect.)
-     *
-     * @param fromIndex index of first element to be removed
-     * @param toIndex index after last element to be removed
-     * @throws IndexOutOfBoundsException if fromIndex or toIndex out of range
-     *         ({@code fromIndex < 0 || toIndex > size() || toIndex < fromIndex})
-     */
     void removeRange(int fromIndex, int toIndex) {
         final ReentrantLock lock = this.lock;
         lock.lock();
@@ -401,10 +372,7 @@ public class CopyOnWriteArrayList<E> implements List<E>, RandomAccess, Cloneable
     }
 
     /**
-     * Appends the element, if not present.
-     *
-     * @param e element to be added to this list, if absent
-     * @return {@code true} if the element was added
+     * 当元素不存在时add，O(n)
      */
     public boolean addIfAbsent(E e) {
         Object[] snapshot = getArray();
@@ -412,10 +380,6 @@ public class CopyOnWriteArrayList<E> implements List<E>, RandomAccess, Cloneable
             addIfAbsent(e, snapshot);
     }
 
-    /**
-     * A version of addIfAbsent using the strong hint that given
-     * recent snapshot does not contain e.
-     */
     private boolean addIfAbsent(E e, Object[] snapshot) {
         final ReentrantLock lock = this.lock;
         lock.lock();
