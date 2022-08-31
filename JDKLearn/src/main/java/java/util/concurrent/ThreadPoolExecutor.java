@@ -1,38 +1,3 @@
-/*
- * ORACLE PROPRIETARY/CONFIDENTIAL. Use is subject to license terms.
- *
- *
- *
- *
- *
- *
- *
- *
- *
- *
- *
- *
- *
- *
- *
- *
- *
- *
- *
- *
- */
-
-/*
- *
- *
- *
- *
- *
- * Written by Doug Lea with assistance from members of JCP JSR-166
- * Expert Group and released to the public domain, as explained at
- * http://creativecommons.org/publicdomain/zero/1.0/
- */
-
 package java.util.concurrent;
 
 import java.security.AccessControlContext;
@@ -434,17 +399,6 @@ public class ThreadPoolExecutor extends AbstractExecutorService {
         do {} while (! compareAndDecrementWorkerCount(ctl.get()));
     }
 
-    /**
-     * The queue used for holding tasks and handing off to worker
-     * threads.  We do not require that workQueue.poll() returning
-     * null necessarily means that workQueue.isEmpty(), so rely
-     * solely on isEmpty to see if the queue is empty (which we must
-     * do for example when deciding whether to transition from
-     * SHUTDOWN to TIDYING).  This accommodates special-purpose
-     * queues such as DelayQueues for which poll() is allowed to
-     * return null even if it may later return non-null when delays
-     * expire.
-     */
     private final BlockingQueue<Runnable> workQueue;
 
     /**
@@ -486,69 +440,25 @@ public class ThreadPoolExecutor extends AbstractExecutorService {
     private long completedTaskCount;
 
     /*
-     * All user control parameters are declared as volatiles so that
-     * ongoing actions are based on freshest values, but without need
-     * for locking, since no internal invariants depend on them
-     * changing synchronously with respect to other actions.
-     */
-
-    /**
-     * Factory for new threads. All threads are created using this
-     * factory (via method addWorker).  All callers must be prepared
-     * for addWorker to fail, which may reflect a system or user's
-     * policy limiting the number of threads.  Even though it is not
-     * treated as an error, failure to create threads may result in
-     * new tasks being rejected or existing ones remaining stuck in
-     * the queue.
-     *
-     * We go further and preserve pool invariants even in the face of
-     * errors such as OutOfMemoryError, that might be thrown while
-     * trying to create threads.  Such errors are rather common due to
-     * the need to allocate a native stack in Thread.start, and users
-     * will want to perform clean pool shutdown to clean up.  There
-     * will likely be enough memory available for the cleanup code to
-     * complete without encountering yet another OutOfMemoryError.
+     * 所有用户控制参数都被声明为 volatile，因此正在进行的操作基于最新值
+     * 但不需要同步锁，因为没有内部不变量依赖于它们相对于其他操作同步变化。
      */
     private volatile ThreadFactory threadFactory;
-
-    /**
-     * Handler called when saturated or shutdown in execute.
-     */
     private volatile RejectedExecutionHandler handler;
-
-    /**
-     * Timeout in nanoseconds for idle threads waiting for work.
-     * Threads use this timeout when there are more than corePoolSize
-     * present or if allowCoreThreadTimeOut. Otherwise they wait
-     * forever for new work.
-     */
     private volatile long keepAliveTime;
 
     /**
-     * If false (default), core threads stay alive even when idle.
-     * If true, core threads use keepAliveTime to time out waiting
-     * for work.
+     * 如果为 false（默认），核心线程即使在空闲时也保持活动状态。
+     * 如果为 true，核心线程使用 keepAliveTime 超时等待工作。
      */
     private volatile boolean allowCoreThreadTimeOut;
-
-    /**
-     * Core pool size is the minimum number of workers to keep alive
-     * (and not allow to time out etc) unless allowCoreThreadTimeOut
-     * is set, in which case the minimum is zero.
-     */
     private volatile int corePoolSize;
-
-    /**
-     * Maximum pool size. Note that the actual maximum is internally
-     * bounded by CAPACITY.
-     */
     private volatile int maximumPoolSize;
 
     /**
-     * The default rejected execution handler
+     * 默认拒绝策略，为AbortPolicy
      */
-    private static final RejectedExecutionHandler defaultHandler =
-        new AbortPolicy();
+    private static final RejectedExecutionHandler defaultHandler = new AbortPolicy();
 
     /**
      * Permission required for callers of shutdown and shutdownNow.
@@ -1168,31 +1078,22 @@ public class ThreadPoolExecutor extends AbstractExecutorService {
         }
     }
 
-    // Public constructors and methods
+    // ---------公共构造器和方法----------
 
     /**
-     * Creates a new {@code ThreadPoolExecutor} with the given initial
-     * parameters and default thread factory and rejected execution handler.
-     * It may be more convenient to use one of the {@link Executors} factory
-     * methods instead of this general purpose constructor.
+     * 线程池构造1，使用默认的线程工厂和默认拒绝策略
      *
-     * @param corePoolSize the number of threads to keep in the pool, even
-     *        if they are idle, unless {@code allowCoreThreadTimeOut} is set
-     * @param maximumPoolSize the maximum number of threads to allow in the
-     *        pool
-     * @param keepAliveTime when the number of threads is greater than
-     *        the core, this is the maximum time that excess idle threads
-     *        will wait for new tasks before terminating.
-     * @param unit the time unit for the {@code keepAliveTime} argument
-     * @param workQueue the queue to use for holding tasks before they are
-     *        executed.  This queue will hold only the {@code Runnable}
-     *        tasks submitted by the {@code execute} method.
-     * @throws IllegalArgumentException if one of the following holds:<br>
+     * @param corePoolSize 保留在池中的线程数，即使它们是空闲的，除非设置了{@code allowCoreThreadTimeOut}
+     * @param maximumPoolSize 池中允许最大的线程池
+     * @param keepAliveTime 当线程池中的线程数大于{@code corePoolSize}时，线程等待的最大空闲等待时间
+     * @param unit {@code keepAliveTime}的单位
+     * @param workQueue 队列用于存储未执行的任务. 队列仅保存由{@code execute}方法提交的Runnable任务
+     * @throws IllegalArgumentException 以下任意一点成立:<br>
      *         {@code corePoolSize < 0}<br>
      *         {@code keepAliveTime < 0}<br>
      *         {@code maximumPoolSize <= 0}<br>
      *         {@code maximumPoolSize < corePoolSize}
-     * @throws NullPointerException if {@code workQueue} is null
+     * @throws NullPointerException 如果{@code workQueue}为null
      */
     public ThreadPoolExecutor(int corePoolSize,
                               int maximumPoolSize,
@@ -1204,29 +1105,20 @@ public class ThreadPoolExecutor extends AbstractExecutorService {
     }
 
     /**
-     * Creates a new {@code ThreadPoolExecutor} with the given initial
-     * parameters and default rejected execution handler.
+     * 线程池构造2，使用指定的线程工厂和默认拒绝策略
      *
-     * @param corePoolSize the number of threads to keep in the pool, even
-     *        if they are idle, unless {@code allowCoreThreadTimeOut} is set
-     * @param maximumPoolSize the maximum number of threads to allow in the
-     *        pool
-     * @param keepAliveTime when the number of threads is greater than
-     *        the core, this is the maximum time that excess idle threads
-     *        will wait for new tasks before terminating.
-     * @param unit the time unit for the {@code keepAliveTime} argument
-     * @param workQueue the queue to use for holding tasks before they are
-     *        executed.  This queue will hold only the {@code Runnable}
-     *        tasks submitted by the {@code execute} method.
-     * @param threadFactory the factory to use when the executor
-     *        creates a new thread
-     * @throws IllegalArgumentException if one of the following holds:<br>
+     * @param corePoolSize 保留在池中的线程数，即使它们是空闲的，除非设置了{@code allowCoreThreadTimeOut}
+     * @param maximumPoolSize 池中允许最大的线程池
+     * @param keepAliveTime 当线程池中的线程数大于{@code corePoolSize}时，线程等待的最大空闲等待时间
+     * @param unit {@code keepAliveTime}的单位
+     * @param workQueue 队列用于存储未执行的任务. 队列仅保存由{@code execute}方法提交的Runnable任务
+     * @param threadFactory 线程池创建线程时使用的工厂
+     * @throws IllegalArgumentException 以下任意一点成立:<br>
      *         {@code corePoolSize < 0}<br>
      *         {@code keepAliveTime < 0}<br>
      *         {@code maximumPoolSize <= 0}<br>
      *         {@code maximumPoolSize < corePoolSize}
-     * @throws NullPointerException if {@code workQueue}
-     *         or {@code threadFactory} is null
+     * @throws NullPointerException 如果{@code workQueue}为null或{@code threadFactory}为null
      */
     public ThreadPoolExecutor(int corePoolSize,
                               int maximumPoolSize,
@@ -1239,29 +1131,20 @@ public class ThreadPoolExecutor extends AbstractExecutorService {
     }
 
     /**
-     * Creates a new {@code ThreadPoolExecutor} with the given initial
-     * parameters and default thread factory.
+     * 线程池构造3，使用默认的线程工厂和指定拒绝策略
      *
-     * @param corePoolSize the number of threads to keep in the pool, even
-     *        if they are idle, unless {@code allowCoreThreadTimeOut} is set
-     * @param maximumPoolSize the maximum number of threads to allow in the
-     *        pool
-     * @param keepAliveTime when the number of threads is greater than
-     *        the core, this is the maximum time that excess idle threads
-     *        will wait for new tasks before terminating.
-     * @param unit the time unit for the {@code keepAliveTime} argument
-     * @param workQueue the queue to use for holding tasks before they are
-     *        executed.  This queue will hold only the {@code Runnable}
-     *        tasks submitted by the {@code execute} method.
-     * @param handler the handler to use when execution is blocked
-     *        because the thread bounds and queue capacities are reached
-     * @throws IllegalArgumentException if one of the following holds:<br>
+     * @param corePoolSize 保留在池中的线程数，即使它们是空闲的，除非设置了{@code allowCoreThreadTimeOut}
+     * @param maximumPoolSize 池中允许最大的线程池
+     * @param keepAliveTime 当线程池中的线程数大于{@code corePoolSize}时，线程等待的最大空闲等待时间
+     * @param unit {@code keepAliveTime}的单位
+     * @param workQueue 队列用于存储未执行的任务. 队列仅保存由{@code execute}方法提交的Runnable任务
+     * @param handler 当线程和阻塞队列都满时，执行的拒绝策略
+     * @throws IllegalArgumentException 以下任意一点成立:<br>
      *         {@code corePoolSize < 0}<br>
      *         {@code keepAliveTime < 0}<br>
      *         {@code maximumPoolSize <= 0}<br>
      *         {@code maximumPoolSize < corePoolSize}
-     * @throws NullPointerException if {@code workQueue}
-     *         or {@code handler} is null
+     * @throws NullPointerException 如果{@code workQueue}为null或{@code handler}为null
      */
     public ThreadPoolExecutor(int corePoolSize,
                               int maximumPoolSize,
@@ -1274,31 +1157,21 @@ public class ThreadPoolExecutor extends AbstractExecutorService {
     }
 
     /**
-     * Creates a new {@code ThreadPoolExecutor} with the given initial
-     * parameters.
+     * 线程池构造4，使用指定的线程工厂和指定拒绝策略(真正初始化逻辑)
      *
-     * @param corePoolSize the number of threads to keep in the pool, even
-     *        if they are idle, unless {@code allowCoreThreadTimeOut} is set
-     * @param maximumPoolSize the maximum number of threads to allow in the
-     *        pool
-     * @param keepAliveTime when the number of threads is greater than
-     *        the core, this is the maximum time that excess idle threads
-     *        will wait for new tasks before terminating.
-     * @param unit the time unit for the {@code keepAliveTime} argument
-     * @param workQueue the queue to use for holding tasks before they are
-     *        executed.  This queue will hold only the {@code Runnable}
-     *        tasks submitted by the {@code execute} method.
-     * @param threadFactory the factory to use when the executor
-     *        creates a new thread
-     * @param handler the handler to use when execution is blocked
-     *        because the thread bounds and queue capacities are reached
-     * @throws IllegalArgumentException if one of the following holds:<br>
+     * @param corePoolSize 保留在池中的线程数，即使它们是空闲的，除非设置了{@code allowCoreThreadTimeOut}
+     * @param maximumPoolSize 池中允许最大的线程池
+     * @param keepAliveTime 当线程池中的线程数大于{@code corePoolSize}时，线程等待的最大空闲等待时间
+     * @param unit {@code keepAliveTime}的单位
+     * @param workQueue 队列用于存储未执行的任务. 队列仅保存由{@code execute}方法提交的Runnable任务
+     * @param threadFactory 线程池创建线程时使用的工厂
+     * @param handler 当线程和阻塞队列都满时，执行的拒绝策略
+     * @throws IllegalArgumentException 以下任意一点成立:<br>
      *         {@code corePoolSize < 0}<br>
      *         {@code keepAliveTime < 0}<br>
      *         {@code maximumPoolSize <= 0}<br>
      *         {@code maximumPoolSize < corePoolSize}
-     * @throws NullPointerException if {@code workQueue}
-     *         or {@code threadFactory} or {@code handler} is null
+     * @throws NullPointerException 如果{@code workQueue}为null或{@code threadFactory}为null或{@code handler}为null
      */
     public ThreadPoolExecutor(int corePoolSize,
                               int maximumPoolSize,
@@ -1307,16 +1180,12 @@ public class ThreadPoolExecutor extends AbstractExecutorService {
                               BlockingQueue<Runnable> workQueue,
                               ThreadFactory threadFactory,
                               RejectedExecutionHandler handler) {
-        if (corePoolSize < 0 ||
-            maximumPoolSize <= 0 ||
-            maximumPoolSize < corePoolSize ||
-            keepAliveTime < 0)
+        // 入参合法校验，与注释说明的异常抛出逻辑一致
+        if (corePoolSize < 0 || maximumPoolSize <= 0 || maximumPoolSize < corePoolSize || keepAliveTime < 0)
             throw new IllegalArgumentException();
         if (workQueue == null || threadFactory == null || handler == null)
             throw new NullPointerException();
-        this.acc = System.getSecurityManager() == null ?
-                null :
-                AccessController.getContext();
+        this.acc = System.getSecurityManager() == null ? null : AccessController.getContext();
         this.corePoolSize = corePoolSize;
         this.maximumPoolSize = maximumPoolSize;
         this.workQueue = workQueue;
