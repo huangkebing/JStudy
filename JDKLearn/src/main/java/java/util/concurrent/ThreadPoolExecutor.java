@@ -292,13 +292,6 @@ public class ThreadPoolExecutor extends AbstractExecutorService {
      *   workerCount, indicating the effective number of threads
      *   runState,    indicating whether running, shutting down etc
      *
-     * In order to pack them into one int, we limit workerCount to
-     * (2^29)-1 (about 500 million) threads rather than (2^31)-1 (2
-     * billion) otherwise representable. If this is ever an issue in
-     * the future, the variable can be changed to be an AtomicLong,
-     * and the shift/mask constants below adjusted. But until the need
-     * arises, this code is a bit faster and simpler using an int.
-     *
      * The workerCount is the number of workers that have been
      * permitted to start and not permitted to stop.  The value may be
      * transiently different from the actual number of live threads,
@@ -344,18 +337,43 @@ public class ThreadPoolExecutor extends AbstractExecutorService {
      * below).
      */
     private final AtomicInteger ctl = new AtomicInteger(ctlOf(RUNNING, 0));
-    private static final int COUNT_BITS = Integer.SIZE - 3;
-    private static final int CAPACITY   = (1 << COUNT_BITS) - 1;
 
-    // runState is stored in the high-order bits
+    /**
+     * 29，{@code CAPACITY}的幂次
+     */
+    private static final int COUNT_BITS = Integer.SIZE - 3;
+    /**
+     * Integer共32位(其中1位符号位，31位存储)，在ThreadPoolExecutor中前3位存储运行状态，后29位存储任务数量
+     * 0001 1111 1111 1111 1111 1111 1111 1111
+     */
+    private static final int CAPACITY   = (1 << COUNT_BITS) - 1;
+    /**
+     * 运行状态
+     * 1110 0000 0000 0000 0000 0000 0000 0000
+     */
     private static final int RUNNING    = -1 << COUNT_BITS;
+    /**
+     * 0000 0000 0000 0000 0000 0000 0000 0000
+     */
     private static final int SHUTDOWN   =  0 << COUNT_BITS;
+    /**
+     * 0010 0000 0000 0000 0000 0000 0000 0000
+     */
     private static final int STOP       =  1 << COUNT_BITS;
+    /**
+     * 0100 0000 0000 0000 0000 0000 0000 0000
+     */
     private static final int TIDYING    =  2 << COUNT_BITS;
+    /**
+     * 0110 0000 0000 0000 0000 0000 0000 0000
+     */
     private static final int TERMINATED =  3 << COUNT_BITS;
 
     // Packing and unpacking ctl
     private static int runStateOf(int c)     { return c & ~CAPACITY; }
+    /**
+     * 获得目前的任务数量
+     */
     private static int workerCountOf(int c)  { return c & CAPACITY; }
     private static int ctlOf(int rs, int wc) { return rs | wc; }
 
@@ -1232,6 +1250,7 @@ public class ThreadPoolExecutor extends AbstractExecutorService {
          * and so reject the task.
          */
         int c = ctl.get();
+        // 当前任务数 小于 核心线程数，尝试以核心线程添加任务
         if (workerCountOf(c) < corePoolSize) {
             if (addWorker(command, true))
                 return;
