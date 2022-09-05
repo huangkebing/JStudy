@@ -369,10 +369,12 @@ public class ThreadPoolExecutor extends AbstractExecutorService {
      */
     private static final int TERMINATED =  3 << COUNT_BITS;
 
-    // Packing and unpacking ctl
+    /**
+     * 获得运行状态，~CAPACITY=RUNNING,即取高3位，后29位置0
+     */
     private static int runStateOf(int c)     { return c & ~CAPACITY; }
     /**
-     * 获得目前的任务数量
+     * 获得目前的任务数量,即取低29位
      */
     private static int workerCountOf(int c)  { return c & CAPACITY; }
     private static int ctlOf(int rs, int wc) { return rs | wc; }
@@ -417,6 +419,9 @@ public class ThreadPoolExecutor extends AbstractExecutorService {
         do {} while (! compareAndDecrementWorkerCount(ctl.get()));
     }
 
+    /**
+     * 等待执行的队列
+     */
     private final BlockingQueue<Runnable> workQueue;
 
     /**
@@ -832,17 +837,21 @@ public class ThreadPoolExecutor extends AbstractExecutorService {
             int c = ctl.get();
             int rs = runStateOf(c);
 
-            // Check if queue empty only if necessary.
-            if (rs >= SHUTDOWN &&
-                ! (rs == SHUTDOWN &&
-                   firstTask == null &&
-                   ! workQueue.isEmpty()))
+            /*
+             * 等价于 rs >= SHUTDOWN && (rs != SHUTDOWN || firstTask != null || workQueue.isEmpty())
+             * 等价于(rs > SHUTDOWN) || (rs >= SHUTDOWN && firstTask != null) || (rs >= SHUTDOWN && workQueue.isEmpty())
+             * 1.即处于STOP、TIDYING、TERMINATED三个状态，addWorker失败
+             * 2.已不再接受新任务，任务不为null，addWorker失败
+             * 3.任务队列都空了，说明没有任务要做了，且线程池已经马上或者已经关闭了，addWorker失败
+             * 只有rs >= SHUTDOWN成立时，才会有后续判断，若状态为RUNNING则直接进入下面的循环
+             */
+            if (rs >= SHUTDOWN && !(rs == SHUTDOWN && firstTask == null && !workQueue.isEmpty()))
                 return false;
 
             for (;;) {
+                //
                 int wc = workerCountOf(c);
-                if (wc >= CAPACITY ||
-                    wc >= (core ? corePoolSize : maximumPoolSize))
+                if (wc >= CAPACITY || wc >= (core ? corePoolSize : maximumPoolSize))
                     return false;
                 if (compareAndIncrementWorkerCount(c))
                     break retry;
