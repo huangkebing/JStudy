@@ -64,16 +64,18 @@ public class ListTest {
 
     /**
      * label:{} 定义标签，用于逻辑跳转
+     * break loop;表示结束loop所在逻辑
+     *
      */
     @Test
     public void goToTest(){
-        label:{
-            for (int i = 0; i < 10; i++) {
-                for (int j = 0; j < 8; j++) {
-                    System.out.println(j);
-                    if (j % 2 != 0) {
-                        break label;
-                    }
+        label:
+        for (int i = 0; i < 10; i++) {
+            for (int j = 0; j < 8; j++) {
+                System.out.println(j);
+                if (j % 2 != 0) {
+                    //continue label;
+                    break label;
                 }
             }
         }

@@ -80,6 +80,11 @@ public class ThreadTest {
         readLock.unlock();
     }
 
-
-
+    @Test
+    public void aliveTest(){
+        Thread thread = new Thread(()-> System.out.println(1));
+        System.out.println(thread.isAlive());
+        thread.start();
+        System.out.println(thread.isAlive());
+    }
 }

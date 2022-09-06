@@ -397,7 +397,7 @@ public class ThreadPoolExecutor extends AbstractExecutorService {
     }
 
     /**
-     * Attempts to CAS-increment the workerCount field of ctl.
+     * CAS ctl+1
      */
     private boolean compareAndIncrementWorkerCount(int expect) {
         return ctl.compareAndSet(expect, expect + 1);
@@ -451,8 +451,9 @@ public class ThreadPoolExecutor extends AbstractExecutorService {
     private final Condition termination = mainLock.newCondition();
 
     /**
-     * Tracks largest attained pool size. Accessed only under
-     * mainLock.
+     * 记录线程池最大的线程数量
+     * Tracks largest attained pool size.
+     * Accessed only under mainLock.
      */
     private int largestPoolSize;
 
@@ -525,10 +526,7 @@ public class ThreadPoolExecutor extends AbstractExecutorService {
      * state to a negative value, and clear it upon start (in
      * runWorker).
      */
-    private final class Worker
-        extends AbstractQueuedSynchronizer
-        implements Runnable
-    {
+    private final class Worker extends AbstractQueuedSynchronizer implements Runnable {
         /**
          * This class will never be serialized, but we provide a
          * serialVersionUID to suppress a javac warning.
@@ -547,7 +545,8 @@ public class ThreadPoolExecutor extends AbstractExecutorService {
          * @param firstTask the first task (null if none)
          */
         Worker(Runnable firstTask) {
-            setState(-1); // inhibit interrupts until runWorker
+            // todo 禁止中断直到 runworker
+            setState(-1);
             this.firstTask = firstTask;
             this.thread = getThreadFactory().newThread(this);
         }
@@ -849,16 +848,17 @@ public class ThreadPoolExecutor extends AbstractExecutorService {
                 return false;
 
             for (;;) {
-                //
+                // 任务数量大于等于最大容量，或者为核心线程但大于等于核心线程数，或者非核心线程但大于最大线程数，addWorker失败
                 int wc = workerCountOf(c);
                 if (wc >= CAPACITY || wc >= (core ? corePoolSize : maximumPoolSize))
                     return false;
+                // 对ctl执行CAS+1，若成功，就执行下阶段逻辑
                 if (compareAndIncrementWorkerCount(c))
                     break retry;
-                c = ctl.get();  // Re-read ctl
+                // 若失败，重新获取ctl，若运行状态已经发生变化，跳转到外层循环执行；若没有变化，则执行内层循环
+                c = ctl.get();
                 if (runStateOf(c) != rs)
                     continue retry;
-                // else CAS failed due to workerCount change; retry inner loop
             }
         }
 
@@ -876,12 +876,12 @@ public class ThreadPoolExecutor extends AbstractExecutorService {
                     // Back out on ThreadFactory failure or if
                     // shut down before lock acquired.
                     int rs = runStateOf(ctl.get());
-
-                    if (rs < SHUTDOWN ||
-                        (rs == SHUTDOWN && firstTask == null)) {
+                    // 线程池处于运行状态，或者线程池关闭且任务线程为空
+                    if (rs < SHUTDOWN || (rs == SHUTDOWN && firstTask == null)) {
                         if (t.isAlive()) // precheck that t is startable
                             throw new IllegalThreadStateException();
                         workers.add(w);
+                        // 记录最大线程数量
                         int s = workers.size();
                         if (s > largestPoolSize)
                             largestPoolSize = s;
@@ -1390,25 +1390,13 @@ public class ThreadPoolExecutor extends AbstractExecutorService {
         }
     }
 
-    /**
-     * Sets the thread factory used to create new threads.
-     *
-     * @param threadFactory the new thread factory
-     * @throws NullPointerException if threadFactory is null
-     * @see #getThreadFactory
-     */
+    // ---------------线程工厂get、set方法------------------
     public void setThreadFactory(ThreadFactory threadFactory) {
         if (threadFactory == null)
             throw new NullPointerException();
         this.threadFactory = threadFactory;
     }
 
-    /**
-     * Returns the thread factory used to create new threads.
-     *
-     * @return the current thread factory
-     * @see #setThreadFactory(ThreadFactory)
-     */
     public ThreadFactory getThreadFactory() {
         return threadFactory;
     }
