@@ -1,7 +1,5 @@
 package java.util.concurrent;
 
-import hkb.Reading;
-
 import java.security.AccessControlContext;
 import java.security.AccessController;
 import java.security.PrivilegedAction;
@@ -287,7 +285,6 @@ import java.util.concurrent.locks.ReentrantLock;
  * @since 1.5
  * @author Doug Lea
  */
-@Reading
 public class ThreadPoolExecutor extends AbstractExecutorService {
     /**
      * The main pool control state, ctl, is an atomic integer packing

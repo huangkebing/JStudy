@@ -1,4 +1,4 @@
-package hkb;
+package com.kebing.process;
 
 import java.lang.annotation.Retention;
 import java.lang.annotation.RetentionPolicy;
@@ -9,7 +9,10 @@ import static java.lang.annotation.ElementType.*;
 /**
  * 表示未读的源码
  */
-@Target(value={CONSTRUCTOR, FIELD, LOCAL_VARIABLE, METHOD, PACKAGE, PARAMETER, TYPE})
-@Retention(RetentionPolicy.SOURCE)
+@Target(value={TYPE})
+@Retention(RetentionPolicy.RUNTIME)
 public @interface ToRead {
+    String date() default "";
+
+    String message() default "";
 }
