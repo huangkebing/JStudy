@@ -13,7 +13,7 @@ public class ThreadPoolExecutorTest {
                 TimeUnit.MINUTES, new ArrayBlockingQueue<>(500));
         pool.execute(()->{
             try {
-                TimeUnit.MINUTES.sleep(10);
+                TimeUnit.MILLISECONDS.sleep(10);
             } catch (InterruptedException e) {
                 throw new RuntimeException(e);
             }
@@ -23,5 +23,6 @@ public class ThreadPoolExecutorTest {
                 System.out.println(i);
             }
         });
+        System.out.println(pool);
     }
 }

@@ -388,6 +388,12 @@ public class ThreadPoolExecutor extends AbstractExecutorService {
         return c < s;
     }
 
+    /**
+     * 比较两个状态值大小，若c>=s 返回true
+     * @param c 状态值1
+     * @param s 状态值2
+     * @return c>=s 返回true
+     */
     private static boolean runStateAtLeast(int c, int s) {
         return c >= s;
     }
@@ -451,15 +457,14 @@ public class ThreadPoolExecutor extends AbstractExecutorService {
     private final Condition termination = mainLock.newCondition();
 
     /**
-     * 记录线程池最大的线程数量
-     * Tracks largest attained pool size.
-     * Accessed only under mainLock.
+     * 记录线程池最大的线程数量，即workers.size()的峰值
+     * 读写均只能在获得mainLock后，才允许访问
      */
     private int largestPoolSize;
 
     /**
-     * Counter for completed tasks. Updated only on termination of
-     * worker threads. Accessed only under mainLock.
+     * 已完成任务数量，仅在工作线程终止时将w.completedTasks加到变量中
+     * 读写均只能在获得mainLock后，才允许访问
      */
     private long completedTaskCount;
 
@@ -1617,98 +1622,76 @@ public class ThreadPoolExecutor extends AbstractExecutorService {
         return unit.convert(keepAliveTime, TimeUnit.NANOSECONDS);
     }
 
-    /* User-level queue utilities */
-
+    /*--------------用户级别的等待队列操作公用方法----------------*/
     /**
-     * Returns the task queue used by this executor. Access to the
-     * task queue is intended primarily for debugging and monitoring.
-     * This queue may be in active use.  Retrieving the task queue
-     * does not prevent queued tasks from executing.
+     * 返回此执行程序使用的任务队列。访问任务队列主要用于调试和监控，此队列可能正在使用中，检索任务队列不会阻止排队的任务执行
      *
-     * @return the task queue
+     * @return 任务等待队列
      */
     public BlockingQueue<Runnable> getQueue() {
         return workQueue;
     }
 
     /**
-     * Removes this task from the executor's internal queue if it is
-     * present, thus causing it not to be run if it has not already
-     * started.
+     * 如果该任务存在，则从执行程序的内部队列中删除该任务
+     * 如果是通过{@link #submit}方法提交的任务，则本方法无法移除，因为此时保存在workQueue中的是{@link FutureTask}而非Runnable
+     * 但是，在这种情况下，可以使用方法 {@link #purge} 删除那些取消态的Future
      *
-     * <p>This method may be useful as one part of a cancellation
-     * scheme.  It may fail to remove tasks that have been converted
-     * into other forms before being placed on the internal queue. For
-     * example, a task entered using {@code submit} might be
-     * converted into a form that maintains {@code Future} status.
-     * However, in such cases, method {@link #purge} may be used to
-     * remove those Futures that have been cancelled.
-     *
-     * @param task the task to remove
-     * @return {@code true} if the task was removed
+     * @param task 待移除的task
+     * @return {@code true} 如果任务被移除
      */
     public boolean remove(Runnable task) {
         boolean removed = workQueue.remove(task);
-        tryTerminate(); // In case SHUTDOWN and now empty
+        tryTerminate();
         return removed;
     }
 
     /**
-     * Tries to remove from the work queue all {@link Future}
-     * tasks that have been cancelled. This method can be useful as a
-     * storage reclamation operation, that has no other impact on
-     * functionality. Cancelled tasks are never executed, but may
-     * accumulate in work queues until worker threads can actively
-     * remove them. Invoking this method instead tries to remove them now.
-     * However, this method may fail to remove tasks in
-     * the presence of interference by other threads.
+     * 尝试删除所有取消态的 {@link Future}任务
+     * 取消态的任务不会被执行，但是会一直存放在队列中，直到被工作线程主动移除，调用此方法替换为现在尝试移除他们
+     * 此方法在其他线程的干扰(其他线程操作workQueue)下，可能失败
      */
     public void purge() {
         final BlockingQueue<Runnable> q = workQueue;
         try {
             Iterator<Runnable> it = q.iterator();
+            // 通过迭代器遍历，如果是FutureTask，且已被取消，则移除
             while (it.hasNext()) {
                 Runnable r = it.next();
                 if (r instanceof Future<?> && ((Future<?>)r).isCancelled())
                     it.remove();
             }
         } catch (ConcurrentModificationException fallThrough) {
-            // Take slow path if we encounter interference during traversal.
-            // Make copy for traversal and call remove for cancelled entries.
-            // The slow path is more likely to be O(N*N).
+            // 如果遇到异常，则先转化为数组后，再遍历
             for (Object r : q.toArray())
                 if (r instanceof Future<?> && ((Future<?>)r).isCancelled())
                     q.remove(r);
         }
 
-        tryTerminate(); // In case SHUTDOWN and now empty
+        tryTerminate();
     }
 
-    /* Statistics */
-
+    /*-------------Statistics，获取线程池的各项运行数据----------------*/
     /**
-     * Returns the current number of threads in the pool.
+     * 返回池中的当前线程数
      *
-     * @return the number of threads
+     * @return 线程数量
      */
     public int getPoolSize() {
         final ReentrantLock mainLock = this.mainLock;
         mainLock.lock();
         try {
-            // Remove rare and surprising possibility of
-            // isTerminated() && getPoolSize() > 0
-            return runStateAtLeast(ctl.get(), TIDYING) ? 0
-                : workers.size();
+            // 如果状态为TIDYING或TERMINATED 则返回0，否则返回worker的数量
+            return runStateAtLeast(ctl.get(), TIDYING) ? 0 : workers.size();
         } finally {
             mainLock.unlock();
         }
     }
 
     /**
-     * Returns the approximate number of threads that are actively
-     * executing tasks.
+     * 返回正在执行任务的线程数量
      *
-     * @return the number of threads
+     * @return 正在执行任务的线程数量
      */
     public int getActiveCount() {
         final ReentrantLock mainLock = this.mainLock;
@@ -1725,10 +1708,9 @@ public class ThreadPoolExecutor extends AbstractExecutorService {
     }
 
     /**
-     * Returns the largest number of threads that have ever
-     * simultaneously been in the pool.
+     * 返回池中同时存在的最大线程数
      *
-     * @return the number of threads
+     * @return 池中同时存在的最大线程数
      */
     public int getLargestPoolSize() {
         final ReentrantLock mainLock = this.mainLock;
@@ -1741,17 +1723,15 @@ public class ThreadPoolExecutor extends AbstractExecutorService {
     }
 
     /**
-     * Returns the approximate total number of tasks that have ever been
-     * scheduled for execution. Because the states of tasks and
-     * threads may change dynamically during computation, the returned
-     * value is only an approximation.
+     * 返回已安排执行的任务的大致总数。因为任务和线程的状态在计算过程中可能会动态变化，所以返回的值只是一个近似值
      *
-     * @return the number of tasks
+     * @return 已安排执行的任务的大致总数
      */
     public long getTaskCount() {
         final ReentrantLock mainLock = this.mainLock;
         mainLock.lock();
         try {
+            // 总任务数 = 计数器数量 + 各线程计数器数量 + 执行中线程数 + 等待队列数量
             long n = completedTaskCount;
             for (Worker w : workers) {
                 n += w.completedTasks;
@@ -1765,18 +1745,15 @@ public class ThreadPoolExecutor extends AbstractExecutorService {
     }
 
     /**
-     * Returns the approximate total number of tasks that have
-     * completed execution. Because the states of tasks and threads
-     * may change dynamically during computation, the returned value
-     * is only an approximation, but one that does not ever decrease
-     * across successive calls.
+     * 返回已完成执行的任务总数(近似值)
      *
-     * @return the number of tasks
+     * @return 已完成执行的大致任务总数
      */
     public long getCompletedTaskCount() {
         final ReentrantLock mainLock = this.mainLock;
         mainLock.lock();
         try {
+            // 已完成数 = 计数器数量 + 各线程计数器数量
             long n = completedTaskCount;
             for (Worker w : workers)
                 n += w.completedTasks;
@@ -1787,14 +1764,16 @@ public class ThreadPoolExecutor extends AbstractExecutorService {
     }
 
     /**
-     * Returns a string identifying this pool, as well as its state,
-     * including indications of run state and estimated worker and
-     * task counts.
+     * 返回线程池的描述，如：
+     * java.util.concurrent.ThreadPoolExecutor@73a28541[Running, pool size = 1, active threads = 1, queued tasks = 1,
+     * completed tasks = 0]
      *
-     * @return a string identifying this pool, as well as its state
+     * @return 标识此池的字符串及其状态
      */
     public String toString() {
+        // 完成任务数
         long ncompleted;
+        // 线程池线程数，活跃线程数(即任务执行中的线程数)
         int nworkers, nactive;
         final ReentrantLock mainLock = this.mainLock;
         mainLock.lock();
@@ -1810,10 +1789,10 @@ public class ThreadPoolExecutor extends AbstractExecutorService {
         } finally {
             mainLock.unlock();
         }
+        // 获取线程池运行状态
         int c = ctl.get();
-        String rs = (runStateLessThan(c, SHUTDOWN) ? "Running" :
-                     (runStateAtLeast(c, TERMINATED) ? "Terminated" :
-                      "Shutting down"));
+        String rs = (runStateLessThan(c, SHUTDOWN) ? "Running" : (runStateAtLeast(c, TERMINATED) ? "Terminated" : "Shutting down"));
+        // 拼接结果
         return super.toString() +
             "[" + rs +
             ", pool size = " + nworkers +
@@ -1823,100 +1802,39 @@ public class ThreadPoolExecutor extends AbstractExecutorService {
             "]";
     }
 
-    /* Extension hooks */
-
+    /*------------扩展钩，通过extends来扩展以下3个方法------------*/
     /**
-     * Method invoked prior to executing the given Runnable in the
-     * given thread.  This method is invoked by thread {@code t} that
-     * will execute task {@code r}, and may be used to re-initialize
-     * ThreadLocals, or to perform logging.
+     * 任务{@code r} 执行前调用，此方法由执行任务 {@code r} 的线程 {@code t} 调用(runWorker方法)
+     * 可用于重新初始化 ThreadLocals，或执行日志记录等等
      *
-     * <p>This implementation does nothing, but may be customized in
-     * subclasses. Note: To properly nest multiple overridings, subclasses
-     * should generally invoke {@code super.beforeExecute} at the end of
-     * this method.
-     *
-     * @param t the thread that will run task {@code r}
-     * @param r the task that will be executed
+     * @param t 执行任务r的线程 {@code r}
+     * @param r 被执行的任务
      */
     protected void beforeExecute(Thread t, Runnable r) { }
 
     /**
-     * Method invoked upon completion of execution of the given Runnable.
-     * This method is invoked by the thread that executed the task. If
-     * non-null, the Throwable is the uncaught {@code RuntimeException}
-     * or {@code Error} that caused execution to terminate abruptly.
+     * 任务{@code r} 执行完成后调用。此方法由执行任务{@code r}的线程调用。
+     * {@code t} 如果非 null，则 Throwable 是未捕获的 {@code RuntimeException} 或 {@code Error} 导致执行突然终止。
      *
-     * <p>This implementation does nothing, but may be customized in
-     * subclasses. Note: To properly nest multiple overridings, subclasses
-     * should generally invoke {@code super.afterExecute} at the
-     * beginning of this method.
-     *
-     * <p><b>Note:</b> When actions are enclosed in tasks (such as
-     * {@link FutureTask}) either explicitly or via methods such as
-     * {@code submit}, these task objects catch and maintain
-     * computational exceptions, and so they do not cause abrupt
-     * termination, and the internal exceptions are <em>not</em>
-     * passed to this method. If you would like to trap both kinds of
-     * failures in this method, you can further probe for such cases,
-     * as in this sample subclass that prints either the direct cause
-     * or the underlying exception if a task has been aborted:
-     *
-     *  <pre> {@code
-     * class ExtendedExecutor extends ThreadPoolExecutor {
-     *   // ...
-     *   protected void afterExecute(Runnable r, Throwable t) {
-     *     super.afterExecute(r, t);
-     *     if (t == null && r instanceof Future<?>) {
-     *       try {
-     *         Object result = ((Future<?>) r).get();
-     *       } catch (CancellationException ce) {
-     *           t = ce;
-     *       } catch (ExecutionException ee) {
-     *           t = ee.getCause();
-     *       } catch (InterruptedException ie) {
-     *           Thread.currentThread().interrupt(); // ignore/reset
-     *       }
-     *     }
-     *     if (t != null)
-     *       System.out.println(t);
-     *   }
-     * }}</pre>
-     *
-     * @param r the runnable that has completed
-     * @param t the exception that caused termination, or null if
-     * execution completed normally
+     * @param r 被执行的任务
+     * @param t 导致执行终止的异常, 如果正常执行则为null
      */
     protected void afterExecute(Runnable r, Throwable t) { }
 
     /**
-     * Method invoked when the Executor has terminated.  Default
-     * implementation does nothing. Note: To properly nest multiple
-     * overridings, subclasses should generally invoke
-     * {@code super.terminated} within this method.
+     * Executor 终止时调用的方法
      */
     protected void terminated() { }
 
-    /* Predefined RejectedExecutionHandlers */
-
-    /**
-     * A handler for rejected tasks that runs the rejected task
-     * directly in the calling thread of the {@code execute} method,
-     * unless the executor has been shut down, in which case the task
-     * is discarded.
-     */
+    /*--------------预定义的4个拒绝策略-----------------*/
     public static class CallerRunsPolicy implements RejectedExecutionHandler {
-        /**
-         * Creates a {@code CallerRunsPolicy}.
-         */
         public CallerRunsPolicy() { }
 
         /**
-         * Executes task r in the caller's thread, unless the executor
-         * has been shut down, in which case the task is discarded.
+         * 在调用者的线程中执行任务r，如果线程池已经shutdown，则丢弃任务r
          *
-         * @param r the runnable task requested to be executed
-         * @param e the executor attempting to execute this task
+         * @param r 需要执行的任务
+         * @param e 执行任务r的执行者，线程池
          */
         public void rejectedExecution(Runnable r, ThreadPoolExecutor e) {
             if (!e.isShutdown()) {
@@ -1925,69 +1843,42 @@ public class ThreadPoolExecutor extends AbstractExecutorService {
         }
     }
 
-    /**
-     * A handler for rejected tasks that throws a
-     * {@code RejectedExecutionException}.
-     */
     public static class AbortPolicy implements RejectedExecutionHandler {
-        /**
-         * Creates an {@code AbortPolicy}.
-         */
         public AbortPolicy() { }
 
         /**
-         * Always throws RejectedExecutionException.
+         * 直接抛出异常 {@code RejectedExecutionException}.
          *
-         * @param r the runnable task requested to be executed
-         * @param e the executor attempting to execute this task
+         * @param r 需要执行的任务
+         * @param e 执行任务r的执行者，线程池
          * @throws RejectedExecutionException always
          */
         public void rejectedExecution(Runnable r, ThreadPoolExecutor e) {
-            throw new RejectedExecutionException("Task " + r.toString() +
-                                                 " rejected from " +
-                                                 e.toString());
+            throw new RejectedExecutionException("Task " + r.toString() + " rejected from " + e.toString());
         }
     }
 
-    /**
-     * A handler for rejected tasks that silently discards the
-     * rejected task.
-     */
     public static class DiscardPolicy implements RejectedExecutionHandler {
-        /**
-         * Creates a {@code DiscardPolicy}.
-         */
         public DiscardPolicy() { }
 
         /**
-         * Does nothing, which has the effect of discarding task r.
+         * 什么都不做，即丢弃该任务
          *
-         * @param r the runnable task requested to be executed
-         * @param e the executor attempting to execute this task
+         * @param r 需要执行的任务
+         * @param e 执行任务r的执行者，线程池
          */
         public void rejectedExecution(Runnable r, ThreadPoolExecutor e) {
         }
     }
 
-    /**
-     * A handler for rejected tasks that discards the oldest unhandled
-     * request and then retries {@code execute}, unless the executor
-     * is shut down, in which case the task is discarded.
-     */
     public static class DiscardOldestPolicy implements RejectedExecutionHandler {
-        /**
-         * Creates a {@code DiscardOldestPolicy} for the given executor.
-         */
         public DiscardOldestPolicy() { }
 
         /**
-         * Obtains and ignores the next task that the executor
-         * would otherwise execute, if one is immediately available,
-         * and then retries execution of task r, unless the executor
-         * is shut down, in which case task r is instead discarded.
+         * 移除等待队列中最早的任务(即队首元素)，并执行任务r，前提是线程池e不为shutdown状态
          *
-         * @param r the runnable task requested to be executed
-         * @param e the executor attempting to execute this task
+         * @param r 需要执行的任务
+         * @param e 执行任务r的执行者，线程池
          */
         public void rejectedExecution(Runnable r, ThreadPoolExecutor e) {
             if (!e.isShutdown()) {
