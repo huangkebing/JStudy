@@ -474,11 +474,15 @@ public class ThreadPoolExecutor extends AbstractExecutorService {
      */
     private volatile ThreadFactory threadFactory;
     private volatile RejectedExecutionHandler handler;
+
+    /**
+     * 线程空闲时保留的最大时长，以纳秒为单位保存
+     */
     private volatile long keepAliveTime;
 
     /**
-     * 如果为 false（默认），核心线程即使在空闲时也保持活动状态。
-     * 如果为 true，核心线程使用 keepAliveTime 超时等待工作。
+     * 如果为true，则适用于非核心线程的相同保活策略也适用于核心线程(即空闲时间超过{@code keepAliveTime}后，被终止)
+     * 当为 false（默认值）时，核心线程永远不会由于空闲而终止
      */
     private volatile boolean allowCoreThreadTimeOut;
     private volatile int corePoolSize;
@@ -532,13 +536,11 @@ public class ThreadPoolExecutor extends AbstractExecutorService {
      * runWorker).
      */
     private final class Worker extends AbstractQueuedSynchronizer implements Runnable {
-        /**
-         * This class will never be serialized, but we provide a
-         * serialVersionUID to suppress a javac warning.
-         */
         private static final long serialVersionUID = 6138294804551838833L;
 
-        /** Thread this worker is running in.  Null if factory fails. */
+        /**
+         * 执行此Worker任务的线程
+         */
         final Thread thread;
         /** Initial task to run.  Possibly null. */
         Runnable firstTask;
@@ -550,13 +552,16 @@ public class ThreadPoolExecutor extends AbstractExecutorService {
          * @param firstTask the first task (null if none)
          */
         Worker(Runnable firstTask) {
-            // todo 禁止中断直到 runworker
+            // 尝试中断时，会执行tryLock方法，即通过CAS将state从0改为1，但永远不会成功，因此不会被中断
             setState(-1);
             this.firstTask = firstTask;
+            // 通过线程工厂，创建线程，其中的Runnable为当前对象
             this.thread = getThreadFactory().newThread(this);
         }
 
-        /** Delegates main run loop to outer runWorker  */
+        /**
+         * 线程的run方法，主逻辑由{@link #runWorker(Worker)}执行
+         */
         public void run() {
             runWorker(this);
         }
@@ -1510,16 +1515,9 @@ public class ThreadPoolExecutor extends AbstractExecutorService {
     }
 
     /**
-     * Returns true if this pool allows core threads to time out and
-     * terminate if no tasks arrive within the keepAlive time, being
-     * replaced if needed when new tasks arrive. When true, the same
-     * keep-alive policy applying to non-core threads applies also to
-     * core threads. When false (the default), core threads are never
-     * terminated due to lack of incoming tasks.
+     * 返回allowCoreThreadTimeOut
      *
-     * @return {@code true} if core threads are allowed to time out,
-     *         else {@code false}
-     *
+     * @return allowCoreThreadTimeOut
      * @since 1.6
      */
     public boolean allowsCoreThreadTimeOut() {
@@ -1527,20 +1525,11 @@ public class ThreadPoolExecutor extends AbstractExecutorService {
     }
 
     /**
-     * Sets the policy governing whether core threads may time out and
-     * terminate if no tasks arrive within the keep-alive time, being
-     * replaced if needed when new tasks arrive. When false, core
-     * threads are never terminated due to lack of incoming
-     * tasks. When true, the same keep-alive policy applying to
-     * non-core threads applies also to core threads. To avoid
-     * continual thread replacement, the keep-alive time must be
-     * greater than zero when setting {@code true}. This method
-     * should in general be called before the pool is actively used.
+     * 修改{@code allowCoreThreadTimeOut}的值，为避免持续的线程替换，设置 {@code true} 时的 keep-alive 时间必须大于零
+     * 通常应该在主动使用池之前调用此方法
      *
-     * @param value {@code true} if should time out, else {@code false}
-     * @throws IllegalArgumentException if value is {@code true}
-     *         and the current keep-alive time is not greater than zero
-     *
+     * @param value {@code true} or {@code false}
+     * @throws IllegalArgumentException 如果value为{@code true}且当前的{@code keepAliveTime}不大于0
      * @since 1.6
      */
     public void allowCoreThreadTimeOut(boolean value) {
@@ -1548,35 +1537,32 @@ public class ThreadPoolExecutor extends AbstractExecutorService {
             throw new IllegalArgumentException("Core threads must have nonzero keep alive times");
         if (value != allowCoreThreadTimeOut) {
             allowCoreThreadTimeOut = value;
+            // todo interruptIdleWorkers
             if (value)
                 interruptIdleWorkers();
         }
     }
 
     /**
-     * Sets the maximum allowed number of threads. This overrides any
-     * value set in the constructor. If the new value is smaller than
-     * the current value, excess existing threads will be
-     * terminated when they next become idle.
+     * 设置允许的最大线程数。这会覆盖构造函数中设置的任何值。如果新值小于当前值，多余的现有线程将在下次空闲时终止(不会立即生效)
      *
-     * @param maximumPoolSize the new maximum
-     * @throws IllegalArgumentException if the new maximum is
-     *         less than or equal to zero, or
-     *         less than the {@linkplain #getCorePoolSize core pool size}
+     * @param maximumPoolSize 新的最大线程数
+     * @throws IllegalArgumentException 如果新的最大线程数小于0, 或者小于{@linkplain #getCorePoolSize 核心线程数}
      * @see #getMaximumPoolSize
      */
     public void setMaximumPoolSize(int maximumPoolSize) {
         if (maximumPoolSize <= 0 || maximumPoolSize < corePoolSize)
             throw new IllegalArgumentException();
         this.maximumPoolSize = maximumPoolSize;
+        // todo interruptIdleWorkers
         if (workerCountOf(ctl.get()) > maximumPoolSize)
             interruptIdleWorkers();
     }
 
     /**
-     * Returns the maximum allowed number of threads.
+     * 返回允许的最大线程数
      *
-     * @return the maximum allowed number of threads
+     * @return 允许的最大线程数
      * @see #setMaximumPoolSize
      */
     public int getMaximumPoolSize() {
@@ -1584,38 +1570,33 @@ public class ThreadPoolExecutor extends AbstractExecutorService {
     }
 
     /**
-     * Sets the time limit for which threads may remain idle before
-     * being terminated.  If there are more than the core number of
-     * threads currently in the pool, after waiting this amount of
-     * time without processing a task, excess threads will be
-     * terminated.  This overrides any value set in the constructor.
+     * 设置线程在终止之前可以保持空闲的时间限制，如果当前池中的线程数超过核心数{@code corePoolSize}
+     * 则在等待此时间{@code getKeepAliveTime}后没有处理任务，多余的线程将被终止
      *
-     * @param time the time to wait.  A time value of zero will cause
-     *        excess threads to terminate immediately after executing tasks.
-     * @param unit the time unit of the {@code time} argument
-     * @throws IllegalArgumentException if {@code time} less than zero or
-     *         if {@code time} is zero and {@code allowsCoreThreadTimeOut}
+     * @param time 保持空闲的时间(时间值为零将导致多余的线程在执行任务后立即终止)
+     * @param unit {@code time}的时间单位
+     * @throws IllegalArgumentException 如果{@code time}小于0 或者{@code time}为0且{@code allowsCoreThreadTimeOut}为true
      * @see #getKeepAliveTime(TimeUnit)
      */
     public void setKeepAliveTime(long time, TimeUnit unit) {
         if (time < 0)
             throw new IllegalArgumentException();
+        // allowCoreThreadTimeOut为true时，time不允许为0
         if (time == 0 && allowsCoreThreadTimeOut())
             throw new IllegalArgumentException("Core threads must have nonzero keep alive times");
         long keepAliveTime = unit.toNanos(time);
         long delta = keepAliveTime - this.keepAliveTime;
         this.keepAliveTime = keepAliveTime;
+        // todo interruptIdleWorkers
         if (delta < 0)
             interruptIdleWorkers();
     }
 
     /**
-     * Returns the thread keep-alive time, which is the amount of time
-     * that threads in excess of the core pool size may remain
-     * idle before being terminated.
+     * 返回线程保持活跃的最大空闲时间
      *
-     * @param unit the desired time unit of the result
-     * @return the time limit
+     * @param unit 返回结果的时间单位
+     * @return 线程保持活跃的最大空闲时间
      * @see #setKeepAliveTime(long, TimeUnit)
      */
     public long getKeepAliveTime(TimeUnit unit) {

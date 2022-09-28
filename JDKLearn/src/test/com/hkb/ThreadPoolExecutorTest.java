@@ -11,18 +11,13 @@ public class ThreadPoolExecutorTest {
     public void executeTest(){
         ThreadPoolExecutor pool = new ThreadPoolExecutor(1, 2, 5,
                 TimeUnit.MINUTES, new ArrayBlockingQueue<>(500));
-        pool.execute(()->{
+        /*pool.execute(()->{
             try {
-                TimeUnit.MILLISECONDS.sleep(10);
+                TimeUnit.SECONDS.sleep(10);
             } catch (InterruptedException e) {
                 throw new RuntimeException(e);
             }
-        });
-        pool.execute(() -> {
-            for (int i = 0; i < 10; i++) {
-                System.out.println(i);
-            }
-        });
-        System.out.println(pool);
+        });*/
+        System.out.println(pool.prestartCoreThread());
     }
 }
