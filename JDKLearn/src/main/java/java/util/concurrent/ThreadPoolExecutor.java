@@ -1476,14 +1476,13 @@ public class ThreadPoolExecutor extends AbstractExecutorService {
     }
 
     /**
-     * Starts a core thread, causing it to idly wait for work. This
-     * overrides the default policy of starting core threads only when
-     * new tasks are executed. This method will return {@code false}
-     * if all core threads have already been started.
+     * 这会覆盖仅在执行新任务时启动核心线程的默认策略，这会覆盖仅在执行新任务时启动核心线程的默认策略
+     * 如果核心线程已经到达上限，则会返回false
      *
-     * @return {@code true} if a thread was started
+     * @return {@code true} 为创建成功
      */
     public boolean prestartCoreThread() {
+        // 如果线程数小于核心数，且创建核心线程成功，则返回true
         return workerCountOf(ctl.get()) < corePoolSize &&
             addWorker(null, true);
     }
