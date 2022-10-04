@@ -87,4 +87,21 @@ public class ThreadTest {
         thread.start();
         System.out.println(thread.isAlive());
     }
+
+    @Test
+    public void interruptTest(){
+        Thread test = new Thread(() -> {
+            System.out.println("thread sout");
+            try {
+                Thread.sleep(10000);
+            } catch (InterruptedException e) {
+                e.printStackTrace();
+            }
+            System.out.println("thread sout 2");
+        });
+        System.out.println(test.isInterrupted());
+        test.start();
+        test.interrupt();
+        System.out.println(test.isInterrupted());
+    }
 }

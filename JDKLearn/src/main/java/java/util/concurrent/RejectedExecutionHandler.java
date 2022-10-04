@@ -2,6 +2,7 @@ package java.util.concurrent;
 
 /**
  * 当任务不能被{@link ThreadPoolExecutor}处理时的拒绝策略
+ * 在{@link ThreadPoolExecutor} 中定义了4中拒绝策略，当然也可以实现本接口实现自己的拒绝策略
  *
  * @since 1.5
  * @author Doug Lea

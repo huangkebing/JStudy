@@ -18,6 +18,6 @@ public class ThreadPoolExecutorTest {
                 throw new RuntimeException(e);
             }
         });*/
-        System.out.println(pool.prestartCoreThread());
+        System.out.println(pool.isTerminated());
     }
 }
