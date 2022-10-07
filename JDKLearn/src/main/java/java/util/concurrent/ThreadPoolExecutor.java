@@ -304,7 +304,7 @@ public class ThreadPoolExecutor extends AbstractExecutorService {
      *   RUNNING:  运行状态，接受新任务并处理排队的任务
      *   SHUTDOWN: 不接受新任务，但处理排队的任务
      *   STOP:     不接受新任务，不处理排队的任务，中断正在进行的任务
-     *   TIDYING:  所有任务都已终止，workerCount 为零，转换到状态 TIDYING 的线程将运行 terminate() 钩子方法
+     *   TIDYING:  所有任务都已终止，workerCount 为零，转换到状态 TIDYING 的线程将运行 terminated() 钩子方法
      *   TERMINATED: terminated() 已执行完成
      *
      * 这5个值之间的数字，随着runState只会递增，而不会减，但不需要达到每个状态。变化时机是：
@@ -351,6 +351,7 @@ public class ThreadPoolExecutor extends AbstractExecutorService {
     private static final int STOP       =  1 << COUNT_BITS;
     /**
      * 0100 0000 0000 0000 0000 0000 0000 0000
+     * tryTerminate()方法会将状态修改为TIDYING，执行terminated()方法后，修改为TERMINATED状态
      */
     private static final int TIDYING    =  2 << COUNT_BITS;
     /**
