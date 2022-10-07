@@ -358,6 +358,7 @@ public class ThreadPoolExecutor extends AbstractExecutorService {
      */
     private static final int TERMINATED =  3 << COUNT_BITS;
 
+    /*-------------ctl字段操作方法，取相应信息、生成ctl-----------------*/
     /**
      * 获得运行状态，~CAPACITY=RUNNING,即取高3位，后29位置0
      */
@@ -375,11 +376,13 @@ public class ThreadPoolExecutor extends AbstractExecutorService {
      */
     private static int ctlOf(int rs, int wc) { return rs | wc; }
 
-    /*
-     * Bit field accessors that don't require unpacking ctl.
-     * These depend on the bit layout and on workerCount being never negative.
+    /*-------------------------状态判断方法----------------------------*/
+    /**
+     * 比较两个状态值大小，若c小于s 返回true
+     * @param c 状态值1
+     * @param s 状态值2
+     * @return c小于s 返回true
      */
-
     private static boolean runStateLessThan(int c, int s) {
         return c < s;
     }
@@ -394,6 +397,12 @@ public class ThreadPoolExecutor extends AbstractExecutorService {
         return c >= s;
     }
 
+    /**
+     * 比较两个状态值c和SHUTDOWN的大小，若c小于SHUTDOWN(即为RUNNING状态)，则返回true
+     *
+     * @param c 状态值
+     * @return c小于SHUTDOWN 返回true
+     */
     private static boolean isRunning(int c) {
         return c < SHUTDOWN;
     }
@@ -442,8 +451,7 @@ public class ThreadPoolExecutor extends AbstractExecutorService {
     private final ReentrantLock mainLock = new ReentrantLock();
 
     /**
-     * Set containing all worker threads in pool. Accessed only when
-     * holding mainLock.
+     * 包含池中所有工作线程的集合, 仅在持有 mainLock 时访问
      */
     private final HashSet<Worker> workers = new HashSet<Worker>();
 
@@ -464,18 +472,13 @@ public class ThreadPoolExecutor extends AbstractExecutorService {
      */
     private long completedTaskCount;
 
-    /*
-     * 所有用户控制参数都被声明为 volatile，因此正在进行的操作基于最新值
-     * 但不需要同步锁，因为没有内部不变量依赖于它们相对于其他操作同步变化。
-     */
+    /*-------------------以下为构造器的基本入参------------------*/
     private volatile ThreadFactory threadFactory;
     private volatile RejectedExecutionHandler handler;
-
     /**
      * 线程空闲时保留的最大时长，以纳秒为单位保存
      */
     private volatile long keepAliveTime;
-
     /**
      * 如果为true，则适用于非核心线程的相同保活策略也适用于核心线程(即空闲时间超过{@code keepAliveTime}后，被终止)
      * 当为 false（默认值）时，核心线程永远不会由于空闲而终止
@@ -483,12 +486,12 @@ public class ThreadPoolExecutor extends AbstractExecutorService {
     private volatile boolean allowCoreThreadTimeOut;
     private volatile int corePoolSize;
     private volatile int maximumPoolSize;
-
     /**
      * 默认拒绝策略，为AbortPolicy
      */
     private static final RejectedExecutionHandler defaultHandler = new AbortPolicy();
 
+    /*-------------------线程认证使用，销毁时使用--------------------*/
     /**
      * Permission required for callers of shutdown and shutdownNow.
      * We additionally require (see checkShutdownAccess) that callers
@@ -512,7 +515,9 @@ public class ThreadPoolExecutor extends AbstractExecutorService {
     private static final RuntimePermission shutdownPerm =
         new RuntimePermission("modifyThread");
 
-    /* The context to be used when executing the finalizer, or null. */
+    /**
+     * 执行终结器时要使用的上下文，可能null
+     */
     private final AccessControlContext acc;
 
     /**
@@ -606,6 +611,7 @@ public class ThreadPoolExecutor extends AbstractExecutorService {
      */
 
     /**
+     * shutdown和shutdownNow方法调用，用于将状态修改为SHUTDOWN 或者 STOP
      * 将 runState 转换为给定的目标，或者至少已经是给定的目标
      *
      * @param targetState 新的状态, SHUTDOWN 或者 STOP
@@ -669,12 +675,9 @@ public class ThreadPoolExecutor extends AbstractExecutorService {
 
     /**
      * 校验线程所属权限
-     * If there is a security manager, makes sure caller has
-     * permission to shut down threads in general (see shutdownPerm).
-     * If this passes, additionally makes sure the caller is allowed
-     * to interrupt each worker thread. This might not be true even if
-     * first check passed, if the SecurityManager treats some threads
-     * specially.
+     * 如果有安全管理器，请确保调用者通常有权关闭线程（请参阅shutdownPerm）
+     * 如果通过，另外确保调用者被允许中断每个工作线程
+     * 如果 SecurityManager 对某些线程进行特殊处理，即使第一次检查通过，这也可能不是真的。
      */
     private void checkShutdownAccess() {
         SecurityManager security = System.getSecurityManager();
@@ -772,11 +775,9 @@ public class ThreadPoolExecutor extends AbstractExecutorService {
     }
 
     /**
-     * 在调用关闭时执行运行状态转换后的任何进一步清理。
-     * 此处为无操作，但由 ScheduledThreadPoolExecutor 用于取消延迟的任务。
+     * 在调用关闭时执行运行状态转换后的任何进一步清理
      */
-    void onShutdown() {
-    }
+    void onShutdown() {}
 
     /**
      * State check needed by ScheduledThreadPoolExecutor to
