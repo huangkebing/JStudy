@@ -416,7 +416,7 @@ public class ThreadPoolExecutor extends AbstractExecutorService {
     }
 
     /**
-     * Attempts to CAS-decrement the workerCount field of ctl.
+     * 尝试对ctl的workerCount字段进行CAS操作，将值减1
      */
     private boolean compareAndDecrementWorkerCount(int expect) {
         return ctl.compareAndSet(expect, expect - 1);
@@ -856,8 +856,8 @@ public class ThreadPoolExecutor extends AbstractExecutorService {
                 return false;
 
             for (;;) {
-                // 任务数量大于等于最大容量，或者为核心线程但大于等于核心线程数，或者非核心线程但大于最大线程数，addWorker失败
                 int wc = workerCountOf(c);
+                // 任务数量大于等于最大容量，或者大于等于核心线程/最大线程，视作失败
                 if (wc >= CAPACITY || wc >= (core ? corePoolSize : maximumPoolSize))
                     return false;
                 // 对ctl执行CAS+1，若成功，就执行下阶段逻辑
@@ -1073,7 +1073,8 @@ public class ThreadPoolExecutor extends AbstractExecutorService {
         Thread wt = Thread.currentThread();
         Runnable task = w.firstTask;
         w.firstTask = null;
-        w.unlock(); // allow interrupts
+        // 将state从构造器中设置的-1修改为0，执行后可以进行interrupt
+        w.unlock();
         boolean completedAbruptly = true;
         try {
             while (task != null || (task = getTask()) != null) {
