@@ -910,20 +910,15 @@ public class ThreadPoolExecutor extends AbstractExecutorService {
     }
 
     /**
-     * Performs cleanup and bookkeeping for a dying worker. Called
-     * only from worker threads. Unless completedAbruptly is set,
-     * assumes that workerCount has already been adjusted to account
-     * for exit.  This method removes thread from worker set, and
-     * possibly terminates the pool or replaces the worker if either
-     * it exited due to user task exception or if fewer than
-     * corePoolSize workers are running or queue is non-empty but
-     * there are no workers.
+     * 清理和整理垂死的工作线程，仅从runWorker方法中调用
+     * 除非completedAbruptly为true，否则认为workerCount已经调整过了，所以开头只当为true时，调整线程数量
      *
-     * @param w the worker
-     * @param completedAbruptly if the worker died due to user exception
+     * @param w 工作线程
+     * @param completedAbruptly true代表工作线程因为异常而结束
      */
     private void processWorkerExit(Worker w, boolean completedAbruptly) {
-        if (completedAbruptly) // If abrupt, then workerCount wasn't adjusted
+        // 异常退出，CAS将工作线程数量-1
+        if (completedAbruptly)
             decrementWorkerCount();
 
         final ReentrantLock mainLock = this.mainLock;
@@ -938,13 +933,17 @@ public class ThreadPoolExecutor extends AbstractExecutorService {
         tryTerminate();
 
         int c = ctl.get();
+        // RUNNING或者SHUTDOWN态，才会进行以下判断，其他状态直接移除线程即可
         if (runStateLessThan(c, STOP)) {
+            // 如果是非正常退出，无需进行以下判断，直接起一个新工作线程
             if (!completedAbruptly) {
+                // 如果开启了allowCoreThreadTimeOut，则最小拥有线程为0
                 int min = allowCoreThreadTimeOut ? 0 : corePoolSize;
                 if (min == 0 && ! workQueue.isEmpty())
                     min = 1;
+                // 线程数量大于等于最小值，不需要替换直接return
                 if (workerCountOf(c) >= min)
-                    return; // replacement not needed
+                    return;
             }
             addWorker(null, false);
         }
@@ -1052,8 +1051,16 @@ public class ThreadPoolExecutor extends AbstractExecutorService {
         Thread wt = Thread.currentThread();
         Runnable task = w.firstTask;
         w.firstTask = null;
-        // 将state从构造器中设置的-1修改为0，执行后可以进行interrupt
+        /*
+         * 这里不是解锁操作，这里是为了设置state = 0 以及 ExclusiveOwnerThread = null.因为起始状态state = -1
+         * 不允许任何线程抢占锁，这里就是初始化操作
+         */
         w.unlock();
+        /*
+         * 是否突然退出标志位
+         * completedAbruptly = true，代表发生异常，突然退出
+         * completedAbruptly = false, 正常退出
+         */
         boolean completedAbruptly = true;
         try {
             while (task != null || (task = getTask()) != null) {
@@ -1062,10 +1069,8 @@ public class ThreadPoolExecutor extends AbstractExecutorService {
                 // if not, ensure thread is not interrupted.  This
                 // requires a recheck in second case to deal with
                 // shutdownNow race while clearing interrupt
-                if ((runStateAtLeast(ctl.get(), STOP) ||
-                     (Thread.interrupted() &&
-                      runStateAtLeast(ctl.get(), STOP))) &&
-                    !wt.isInterrupted())
+                if ((runStateAtLeast(ctl.get(), STOP) || (Thread.interrupted() && runStateAtLeast(ctl.get(), STOP)))
+                        && !wt.isInterrupted())
                     wt.interrupt();
                 try {
                     beforeExecute(wt, task);
@@ -1093,8 +1098,7 @@ public class ThreadPoolExecutor extends AbstractExecutorService {
         }
     }
 
-    // ---------公共构造器和方法----------
-
+    /*----------------构造器---------------*/
     /**
      * 线程池构造1，使用默认的线程工厂和默认拒绝策略
      *
