@@ -423,9 +423,7 @@ public class ThreadPoolExecutor extends AbstractExecutorService {
     }
 
     /**
-     * Decrements the workerCount field of ctl. This is called only on
-     * abrupt termination of a thread (see processWorkerExit). Other
-     * decrements are performed within getTask.
+     * 对ctl的workerCount字段进行CAS操作，将值减1
      */
     private void decrementWorkerCount() {
         do {} while (! compareAndDecrementWorkerCount(ctl.get()));
@@ -808,35 +806,15 @@ public class ThreadPoolExecutor extends AbstractExecutorService {
         return taskList;
     }
 
-    /*
-     * Methods for creating, running and cleaning up after workers
-     */
-
+    /*-------------------线程创建、运行和回收的方法-------------------*/
     /**
-     * Checks if a new worker can be added with respect to current
-     * pool state and the given bound (either core or maximum). If so,
-     * the worker count is adjusted accordingly, and, if possible, a
-     * new worker is created and started, running firstTask as its
-     * first task. This method returns false if the pool is stopped or
-     * eligible to shut down. It also returns false if the thread
-     * factory fails to create a thread when asked.  If the thread
-     * creation fails, either due to the thread factory returning
-     * null, or due to an exception (typically OutOfMemoryError in
-     * Thread.start()), we roll back cleanly.
+     * 检查是否可以根据当前池状态和给定上限（核心或最大值）添加新工作线程
+     * 如果创建成功，调整工作线程数量(ctl)，将firstTask作为其第一个任务运行
+     * 如果创建失败，返回false，若已对工作线程数量(ctl)或workers产生影响，则会执行回滚方法消除影响
      *
-     * @param firstTask the task the new thread should run first (or
-     * null if none). Workers are created with an initial first task
-     * (in method execute()) to bypass queuing when there are fewer
-     * than corePoolSize threads (in which case we always start one),
-     * or when the queue is full (in which case we must bypass queue).
-     * Initially idle threads are usually created via
-     * prestartCoreThread or to replace other dying workers.
-     *
-     * @param core if true use corePoolSize as bound, else
-     * maximumPoolSize. (A boolean indicator is used here rather than a
-     * value to ensure reads of fresh values after checking other pool
-     * state).
-     * @return true if successful
+     * @param firstTask 新线程应该首先运行的任务（如果没有，则为 null）
+     * @param core 如果为 true，则使用 corePoolSize 作为上限，否则为 maximumPoolSize
+     * @return 如果成功返回true
      */
     private boolean addWorker(Runnable firstTask, boolean core) {
         retry:
@@ -845,12 +823,9 @@ public class ThreadPoolExecutor extends AbstractExecutorService {
             int rs = runStateOf(c);
 
             /*
-             * 等价于 rs >= SHUTDOWN && (rs != SHUTDOWN || firstTask != null || workQueue.isEmpty())
-             * 等价于(rs > SHUTDOWN) || (rs >= SHUTDOWN && firstTask != null) || (rs >= SHUTDOWN && workQueue.isEmpty())
-             * 1.即处于STOP、TIDYING、TERMINATED三个状态，addWorker失败
-             * 2.已不再接受新任务，任务不为null，addWorker失败
-             * 3.任务队列都空了，说明没有任务要做了，且线程池已经马上或者已经关闭了，addWorker失败
-             * 只有rs >= SHUTDOWN成立时，才会有后续判断，若状态为RUNNING则直接进入下面的循环
+             * 状态为RUNNING，判断结果为false，执行后续逻辑
+             * 状态为STOP、TIDYING、TERMINATED，判断结果为true，直接返回false表示addWorker失败
+             * 状态为SHUTDOWN时，只有firstTask为null，且workQueue不为空时，执行后续逻辑(创建工作线程来执行队列中的任务)
              */
             if (rs >= SHUTDOWN && !(rs == SHUTDOWN && firstTask == null && !workQueue.isEmpty()))
                 return false;
@@ -860,17 +835,22 @@ public class ThreadPoolExecutor extends AbstractExecutorService {
                 // 任务数量大于等于最大容量，或者大于等于核心线程/最大线程，视作失败
                 if (wc >= CAPACITY || wc >= (core ? corePoolSize : maximumPoolSize))
                     return false;
-                // 对ctl执行CAS+1，若成功，就执行下阶段逻辑
+                // 对ctl执行CAS+1，若成功说明线程池状态和工作数量没有发生变化，如果失败说明线程池状态或工作数量发送了变化
                 if (compareAndIncrementWorkerCount(c))
+                    // CAS成功，则跳出外层循环
                     break retry;
-                // 若失败，重新获取ctl，若运行状态已经发生变化，跳转到外层循环执行；若没有变化，则执行内层循环
                 c = ctl.get();
+                // CAS失败，检查线程池状态是否发生了变化
+                // 若线程池状态发生变化，跳转到外层循环执行，重新校验线程池状态
+                // 若线程池状态没有变化，说明是工作线程数量变化导致CAS失败，执行内层循环，重新校验工作线程数量
                 if (runStateOf(c) != rs)
                     continue retry;
             }
         }
 
+        // 当workerAdded为true时，执行线程t的start方法，并将workerStarted置为true，表示新增的工作线程已启动(即新建线程成功)
         boolean workerStarted = false;
+        // 将新增的工作线程添加到workers后，将workerAdded置为true
         boolean workerAdded = false;
         Worker w = null;
         try {
@@ -880,16 +860,14 @@ public class ThreadPoolExecutor extends AbstractExecutorService {
                 final ReentrantLock mainLock = this.mainLock;
                 mainLock.lock();
                 try {
-                    // Recheck while holding lock.
-                    // Back out on ThreadFactory failure or if
-                    // shut down before lock acquired.
                     int rs = runStateOf(ctl.get());
-                    // 线程池处于运行状态，或者线程池关闭且任务线程为空
+                    // 再次校验线程池状态
+                    // 线程池处于RUNNING态，或者线程池处于SHUTDOWN态且任务线程为null时允许创建新线程
                     if (rs < SHUTDOWN || (rs == SHUTDOWN && firstTask == null)) {
-                        if (t.isAlive()) // precheck that t is startable
+                        if (t.isAlive())
                             throw new IllegalThreadStateException();
                         workers.add(w);
-                        // 记录最大线程数量
+                        // 记录线程数量峰值
                         int s = workers.size();
                         if (s > largestPoolSize)
                             largestPoolSize = s;
@@ -904,6 +882,7 @@ public class ThreadPoolExecutor extends AbstractExecutorService {
                 }
             }
         } finally {
+            // 新线程没有启动，代表新建线程失败，执行回滚方法
             if (! workerStarted)
                 addWorkerFailed(w);
         }
@@ -911,9 +890,9 @@ public class ThreadPoolExecutor extends AbstractExecutorService {
     }
 
     /**
-     * Rolls back the worker thread creation.
-     * - removes worker from workers, if present
-     * - decrements worker count
+     * 回滚工作线程创建，只在{@link #addWorker}方法中调用
+     * - 如果worker不为null，从workers中移除
+     * - 减少ctl中工作线程数量
      * - rechecks for termination, in case the existence of this
      *   worker was holding up termination
      */
