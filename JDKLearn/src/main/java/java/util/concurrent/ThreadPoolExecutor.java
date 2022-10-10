@@ -917,7 +917,7 @@ public class ThreadPoolExecutor extends AbstractExecutorService {
      * @param completedAbruptly true代表工作线程因为异常而结束
      */
     private void processWorkerExit(Worker w, boolean completedAbruptly) {
-        // 异常退出，CAS将工作线程数量-1
+        // 异常退出，CAS将工作线程数量-1，若正常退出的线程，在getTask方法就已经完成了数量修改
         if (completedAbruptly)
             decrementWorkerCount();
 
@@ -967,13 +967,14 @@ public class ThreadPoolExecutor extends AbstractExecutorService {
      *         workerCount is decremented
      */
     private Runnable getTask() {
-        boolean timedOut = false; // Did the last poll() time out?
+        // 上次拉取任务队列是否超时(即拉取后获得的内容是否为null，若为null则置为true)
+        boolean timedOut = false;
 
         for (;;) {
             int c = ctl.get();
             int rs = runStateOf(c);
 
-            // Check if queue empty only if necessary.
+            // 线程池为SHUTDOWN态且workQueue是空的，或者线程池状态为STOP、TIDYING、TERMINATED时，不获取任务，并将workCount-1
             if (rs >= SHUTDOWN && (rs >= STOP || workQueue.isEmpty())) {
                 decrementWorkerCount();
                 return null;
@@ -981,9 +982,12 @@ public class ThreadPoolExecutor extends AbstractExecutorService {
 
             int wc = workerCountOf(c);
 
-            // Are workers subject to culling?
+            // allowCoreThreadTimeOut为true，或者当前工作线程大于核心线程数时，开启时间限制
             boolean timed = allowCoreThreadTimeOut || wc > corePoolSize;
 
+            // 若wc > maximumPoolSize成立，则通常wc > 1也成立，因此直接尝试减少工作线程
+            // 若开启了时间限制，且获取任务超时，且wc > 1成立，尝试减少工作线程
+            // 若开启了时间限制，且获取任务超时，且wc == 1,但workQueue为空，也尝试减少工作线程
             if ((wc > maximumPoolSize || (timed && timedOut))
                 && (wc > 1 || workQueue.isEmpty())) {
                 if (compareAndDecrementWorkerCount(c))
@@ -993,7 +997,9 @@ public class ThreadPoolExecutor extends AbstractExecutorService {
 
             try {
                 Runnable r = timed ?
+                    // 等待最大活跃时间，会阻塞直到获取到任务或者超时
                     workQueue.poll(keepAliveTime, TimeUnit.NANOSECONDS) :
+                    // 直接获取，会阻塞知道获取到任务
                     workQueue.take();
                 if (r != null)
                     return r;
