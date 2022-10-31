@@ -1004,13 +1004,13 @@ public class ThreadPoolExecutor extends AbstractExecutorService {
             // 执行过后通过handler使用拒绝策略对该任务进行处理，整个方法返回
             if (! isRunning(recheck) && remove(command))
                 reject(command);
-                /*
-                 * 获取线程池中的有效线程数，如果数量是0，则执行addWorker方法
-                 * 这里传入的参数表示：
-                 * 1. 第一个参数为null，表示在线程池中创建一个线程，但不去启动；
-                 * 2. 第二个参数为false，将线程池的有限线程数量的上限设置为maximumPoolSize，添加线程时根据maximumPoolSize来判断；
-                 * 如果判断workerCount大于0，则直接返回，在workQueue中新增的command会在将来的某个时刻被执行。
-                 */
+            /*
+             * 获取线程池中的有效线程数，如果数量是0，则执行addWorker方法
+             * 这里传入的参数表示：
+             * 1. 第一个参数为null，表示在线程池中创建一个线程，但不去启动；
+             * 2. 第二个参数为false，将线程池的有限线程数量的上限设置为maximumPoolSize，添加线程时根据maximumPoolSize来判断；
+             * 如果判断workerCount大于0，则直接返回，在workQueue中新增的command会在将来的某个时刻被执行。
+             */
             else if (workerCountOf(recheck) == 0)
                 addWorker(null, false);
         }
