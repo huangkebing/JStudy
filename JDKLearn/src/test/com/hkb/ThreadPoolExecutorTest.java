@@ -1,24 +1,29 @@
 package com.hkb;
 
-import org.junit.Test;
-
 import java.util.concurrent.ArrayBlockingQueue;
 import java.util.concurrent.ThreadPoolExecutor;
 import java.util.concurrent.TimeUnit;
 
 public class ThreadPoolExecutorTest {
-    @Test
-    public void executeTest(){
+    public static void main(String[] args) {
         ThreadPoolExecutor pool = new ThreadPoolExecutor(1, 2, 5,
                 TimeUnit.MINUTES, new ArrayBlockingQueue<>(500));
+        pool.execute(()->{
+            System.out.println(Thread.currentThread());
+            System.out.println(1/1);
+        });
         /*pool.execute(()->{
-            try {
-                TimeUnit.SECONDS.sleep(10);
-            } catch (InterruptedException e) {
-                throw new RuntimeException(e);
-            }
+            System.out.println(Thread.currentThread());
+            System.out.println(1/0);
         });*/
-        pool.prestartCoreThread();
-        //System.out.println(pool.isTerminated());
+        try {
+            Thread.sleep(3000);
+        } catch (InterruptedException e) {
+            throw new RuntimeException(e);
+        }
+        pool.execute(()->{
+            System.out.println(Thread.currentThread());
+            System.out.println(1/1);
+        });
     }
 }
