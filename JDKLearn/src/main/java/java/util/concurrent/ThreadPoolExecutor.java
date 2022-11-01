@@ -534,9 +534,7 @@ public class ThreadPoolExecutor extends AbstractExecutorService {
              */
             // Check if queue empty only if necessary.
             if (rs >= SHUTDOWN &&
-                    !(rs == SHUTDOWN &&
-                            firstTask == null &&
-                            !workQueue.isEmpty()))
+                    !(rs == SHUTDOWN && firstTask == null && !workQueue.isEmpty()))
                 return false;
             for (; ; ) {
                 // 获取线程数
