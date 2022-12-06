@@ -1,54 +1,18 @@
-/*
- * ORACLE PROPRIETARY/CONFIDENTIAL. Use is subject to license terms.
- *
- *
- *
- *
- *
- *
- *
- *
- *
- *
- *
- *
- *
- *
- *
- *
- *
- *
- *
- *
- */
-
-/*
- *
- *
- *
- *
- *
- * Written by Doug Lea with assistance from members of JCP JSR-166
- * Expert Group and released to the public domain, as explained at
- * http://creativecommons.org/publicdomain/zero/1.0/
- */
-
 package java.util.concurrent;
 
 /**
- * A {@link Future} that is {@link Runnable}. Successful execution of
- * the {@code run} method causes completion of the {@code Future}
- * and allows access to its results.
+ * 一个{@link Runnable}的{@link Future}
+ * 执行{@code run}方法来完成{@code Future}，并允许访问结果
+ *
+ * @param <V> Future的{@code get}方法返回的类型
+ * @author Doug Lea
  * @see FutureTask
  * @see Executor
  * @since 1.6
- * @author Doug Lea
- * @param <V> The result type returned by this Future's {@code get} method
  */
 public interface RunnableFuture<V> extends Runnable, Future<V> {
     /**
-     * Sets this Future to the result of its computation
-     * unless it has been cancelled.
+     * 将future的状态修改为完成，若被取消了则不修改
      */
     void run();
 }
