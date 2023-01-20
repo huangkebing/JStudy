@@ -74,7 +74,7 @@ public class FutureTask<V> implements RunnableFuture<V> {
      */
 
     /**
-     * The run state of this task, initially NEW.  The run state
+     * 此任务的运行状态，最初为NEW.  The run state
      * transitions to a terminal state only in methods set,
      * setException, and cancel.  During completion, state may take on
      * transient values of COMPLETING (while outcome is being set) or
@@ -123,34 +123,29 @@ public class FutureTask<V> implements RunnableFuture<V> {
     }
 
     /**
-     * Creates a {@code FutureTask} that will, upon running, execute the
-     * given {@code Callable}.
+     * 入参Callable构造器
      *
-     * @param  callable the callable task
-     * @throws NullPointerException if the callable is null
+     * @param  callable callable线程任务
+     * @throws NullPointerException 如果callable为null
      */
     public FutureTask(Callable<V> callable) {
         if (callable == null)
             throw new NullPointerException();
         this.callable = callable;
-        this.state = NEW;       // ensure visibility of callable
+        this.state = NEW;
     }
 
     /**
-     * Creates a {@code FutureTask} that will, upon running, execute the
-     * given {@code Runnable}, and arrange that {@code get} will return the
-     * given result on successful completion.
+     * 入参Runnable构造器
      *
-     * @param runnable the runnable task
-     * @param result the result to return on successful completion. If
-     * you don't need a particular result, consider using
-     * constructions of the form:
+     * @param runnable runnable线程任务
+     * @param result 成功完成后返回结果类型。如果不需要返回结果，使用以下形式的构造:
      * {@code Future<?> f = new FutureTask<Void>(runnable, null)}
-     * @throws NullPointerException if the runnable is null
+     * @throws NullPointerException 如果runnable为null
      */
     public FutureTask(Runnable runnable, V result) {
         this.callable = Executors.callable(runnable, result);
-        this.state = NEW;       // ensure visibility of callable
+        this.state = NEW;
     }
 
     public boolean isCancelled() {
@@ -253,9 +248,7 @@ public class FutureTask<V> implements RunnableFuture<V> {
     }
 
     public void run() {
-        if (state != NEW ||
-            !UNSAFE.compareAndSwapObject(this, runnerOffset,
-                                         null, Thread.currentThread()))
+        if (state != NEW || !UNSAFE.compareAndSwapObject(this, runnerOffset, null, Thread.currentThread()))
             return;
         try {
             Callable<V> c = callable;
