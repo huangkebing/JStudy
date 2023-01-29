@@ -8,6 +8,7 @@
         <module>JDKLearn</module>
         <module>JavaLearn</module>
         <module>JVMLearn</module>
+        <module>SpringLearn</module>
     </modules>
     <groupId>com</groupId>
     <artifactId>hkb</artifactId>
