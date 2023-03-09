@@ -63,5 +63,11 @@ public HashMap(int initialCapacity, float loadFactor) {
 
 ## 三、内部类
 
+### 3.1 Map.Entry
+
+定义在Map接口中，定义了一些行为方法，Java 1.8新增了一些<u>**使用函数式接口的排序方法**</u>
+
+
+
 ## 四、方法
 
