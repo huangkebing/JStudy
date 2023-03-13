@@ -271,13 +271,18 @@ public class HashMap<K,V> extends AbstractMap<K,V> implements Map<K,V>, Cloneabl
     static final int MIN_TREEIFY_CAPACITY = 64;
 
     /**
-     * Basic hash bin node, used for most entries.  (See below for
-     * TreeNode subclass, and in LinkedHashMap for its Entry subclass.)
+     * 基本的哈希节点，大多数情况下使用此类。其他节点类如：TreeNode、LinkedHashMap中Node的子类
      */
     static class Node<K,V> implements Entry<K,V> {
+        /**
+         * key的hash值
+         */
         final int hash;
         final K key;
         V value;
+        /**
+         * 下一个节点，hash冲突时使用
+         */
         Node<K,V> next;
 
         Node(int hash, K key, V value, Node<K,V> next) {
@@ -301,6 +306,9 @@ public class HashMap<K,V> extends AbstractMap<K,V> implements Map<K,V>, Cloneabl
             return oldValue;
         }
 
+        /**
+         * 跟据hashCode方法和equals方法，Node类执行equals方法判断相等的条件时同一个对象或者key和value相等
+         */
         public final boolean equals(Object o) {
             if (o == this)
                 return true;
@@ -314,7 +322,7 @@ public class HashMap<K,V> extends AbstractMap<K,V> implements Map<K,V>, Cloneabl
         }
     }
 
-    /* ---------------- Static utilities -------------- */
+    /* ---------------- 静态工具方法 -------------- */
 
     /**
      * Computes key.hashCode() and spreads (XORs) higher bits of hash
@@ -530,21 +538,8 @@ public class HashMap<K,V> extends AbstractMap<K,V> implements Map<K,V>, Cloneabl
     }
 
     /**
-     * Returns the value to which the specified key is mapped,
-     * or {@code null} if this map contains no mapping for the key.
-     *
-     * <p>More formally, if this map contains a mapping from a key
-     * {@code k} to a value {@code v} such that {@code (key==null ? k==null :
-     * key.equals(k))}, then this method returns {@code v}; otherwise
-     * it returns {@code null}.  (There can be at most one such mapping.)
-     *
-     * <p>A return value of {@code null} does not <i>necessarily</i>
-     * indicate that the map contains no mapping for the key; it's also
-     * possible that the map explicitly maps the key to {@code null}.
-     * The {@link #containsKey containsKey} operation may be used to
-     * distinguish these two cases.
-     *
-     * @see #put(Object, Object)
+     * 返回给定key所映射的value或者当没有key映射的value时返回null
+     * 可以使用containsKey方法区分是映射的value为null还是没有key映射value
      */
     public V get(Object key) {
         Node<K,V> e;
@@ -552,25 +547,27 @@ public class HashMap<K,V> extends AbstractMap<K,V> implements Map<K,V>, Cloneabl
     }
 
     /**
-     * Implements Map.get and related methods
+     * 实现Map.get以及其他相关方法，get操作的具体逻辑实现
      *
-     * @param hash hash for key
-     * @param key the key
-     * @return the node, or null if none
+     * @param hash key的hash值
+     * @param key key
+     * @return key所在节点，如果没有则为null
      */
     final Node<K,V> getNode(int hash, Object key) {
         Node<K,V>[] tab; Node<K,V> first, e; int n; K k;
-        if ((tab = table) != null && (n = tab.length) > 0 &&
-            (first = tab[(n - 1) & hash]) != null) {
-            if (first.hash == hash && // always check first node
-                ((k = first.key) == key || (key != null && key.equals(k))))
+        // table为空，table长度小于等于0，key的hash映射的位置为空，说明不存在该key的映射，直接返回null
+        if ((tab = table) != null && (n = tab.length) > 0 && (first = tab[(n - 1) & hash]) != null) {
+            // 检查首节点，如果hash值相等且key相同或者hash值相等且key不为null且key值相同，则找到映射，返回首节点
+            if (first.hash == hash && ((k = first.key) == key || (key != null && key.equals(k))))
                 return first;
+            // 否则检查后续节点，后续节点的存储形式跟据长度分为链表和红黑树
             if ((e = first.next) != null) {
+                // 红黑树时，执行getTreeNode
                 if (first instanceof TreeNode)
                     return ((TreeNode<K,V>)first).getTreeNode(hash, key);
+                // 链表时，遍历链表，按首节点的规则判断
                 do {
-                    if (e.hash == hash &&
-                        ((k = e.key) == key || (key != null && key.equals(k))))
+                    if (e.hash == hash && ((k = e.key) == key || (key != null && key.equals(k))))
                         return e;
                 } while ((e = e.next) != null);
             }
@@ -616,8 +613,7 @@ public class HashMap<K,V> extends AbstractMap<K,V> implements Map<K,V>, Cloneabl
      * @param evict if false, the table is in creation mode.
      * @return previous value, or null if none
      */
-    final V putVal(int hash, K key, V value, boolean onlyIfAbsent,
-                   boolean evict) {
+    final V putVal(int hash, K key, V value, boolean onlyIfAbsent, boolean evict) {
         Node<K,V>[] tab; Node<K,V> p; int n, i;
         if ((tab = table) == null || (n = tab.length) == 0)
             n = (tab = resize()).length;
@@ -1045,6 +1041,9 @@ public class HashMap<K,V> extends AbstractMap<K,V> implements Map<K,V>, Cloneabl
 
     // Overrides of JDK8 Map extension methods
 
+    /**
+     * 返回给定key所映射的value或者当没有key映射的value时返回defaultValue
+     */
     @Override
     public V getOrDefault(Object key, V defaultValue) {
         Node<K,V> e;
