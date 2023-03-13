@@ -1782,9 +1782,7 @@ public class HashMap<K,V> extends AbstractMap<K,V> implements Map<K,V>, Cloneabl
         }
     }
 
-    /* ------------------------------------------------------------ */
-    // Tree bins
-
+    /* -----------------------------树节点------------------------------- */
     /**
      * Entry for Tree bins. Extends LinkedHashMap.Entry (which in turn
      * extends Node) so can be used as extension of either regular or
