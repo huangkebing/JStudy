@@ -1784,15 +1784,13 @@ public class HashMap<K,V> extends AbstractMap<K,V> implements Map<K,V>, Cloneabl
 
     /* -----------------------------树节点------------------------------- */
     /**
-     * Entry for Tree bins. Extends LinkedHashMap.Entry (which in turn
-     * extends Node) so can be used as extension of either regular or
-     * linked node.
+     * 树节点的实体类。继承LinkedHashMap.Entry，因此可以用作普通Node或LinkedNode的扩展
      */
     static final class TreeNode<K,V> extends LinkedHashMap.Entry<K,V> {
-        TreeNode<K,V> parent;  // red-black tree links
+        TreeNode<K,V> parent;
         TreeNode<K,V> left;
         TreeNode<K,V> right;
-        TreeNode<K,V> prev;    // needed to unlink next upon deletion
+        TreeNode<K,V> prev;
         boolean red;
         TreeNode(int hash, K key, V val, Node<K,V> next) {
             super(hash, key, val, next);

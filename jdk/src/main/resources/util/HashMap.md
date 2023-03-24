@@ -238,6 +238,14 @@ static class Node<K,V> implements Entry<K,V> {
 }
 ```
 
+### 3.3 HashMap.TreeNode
+
+当哈希冲突导致的链表长度增长到8时，由链表转化为红黑树，其节点也会由`Node`转化为`TreeNode`
+
+#### ==备注2 红黑树==
+
+> [30张图带你彻底理解红黑树](https://www.jianshu.com/p/e136ec79235c)
+
 
 
 ## 四、公共方法逻辑
