@@ -307,7 +307,26 @@ final Node<K,V> getNode(int hash, Object key) {
 }
 ```
 
-#### ==备注2 todo put总结==
+当节点类型为红黑树时，执行`getTreeNode`方法。该方法分为2步，第一步先查找跟节点，第二步使用跟节点查找指定节点即执行`find`方法
+
+```java
+/**
+ * 先查找root节点，然后再执行find查找指定节点
+ */
+final TreeNode<K,V> getTreeNode(int h, Object k) {
+    return ((parent != null) ? root() : this).find(h, k, null);
+}
+```
+
+#### ==问题2 先找root节点==
+
+> Q: 为什么在查找指定节点前，先查找root节点，那数组中的节点是什么？
+>
+> A: 数组中的节点未必是跟节点，因为旋转操作可能会改变跟节点，因此需要先找到跟节点再执行查找动作
+
+
+
+#### ==备注3 todo put总结==
 
 > 待后续读完TreeNode后来总结put的逻辑
 >

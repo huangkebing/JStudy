@@ -1797,7 +1797,7 @@ public class HashMap<K,V> extends AbstractMap<K,V> implements Map<K,V>, Cloneabl
         }
 
         /**
-         * Returns root of tree containing this node.
+         * 返回红黑树的跟节点
          */
         final TreeNode<K,V> root() {
             for (TreeNode<K,V> r = this, p;;) {
@@ -1838,6 +1838,7 @@ public class HashMap<K,V> extends AbstractMap<K,V> implements Map<K,V>, Cloneabl
          * comparing keys.
          */
         final TreeNode<K,V> find(int h, Object k, Class<?> kc) {
+            // p为当前正在比对的节点
             TreeNode<K,V> p = this;
             do {
                 int ph, dir; K pk;
@@ -1865,7 +1866,7 @@ public class HashMap<K,V> extends AbstractMap<K,V> implements Map<K,V>, Cloneabl
         }
 
         /**
-         * Calls find for root node.
+         * 先查找root节点，然后再执行find查找指定节点
          */
         final TreeNode<K,V> getTreeNode(int h, Object k) {
             return ((parent != null) ? root() : this).find(h, k, null);
