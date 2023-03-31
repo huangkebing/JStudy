@@ -1,12 +1,10 @@
-# 三方通用工具类库
+# Apache commons
 
 ## 概述
 
 日常开发中，经常会遇到一些点，比如判空、字符串操作(字符替换、大小写等)、集合操作(Map 键值倒转、列表切割)、日期格式等等。这些偏通用的逻辑，有很多三方工具类库提供了实现，可以直接拿来使用以提高开发效率，避免重复造轮子
 
 目前市面上流传比较广泛的如下：
-
-> Apache Commons
 
 官方文档：[Apache Commons](https://commons.apache.org/)
 
@@ -21,12 +19,6 @@
 | Collections | 扩展Java集合框架的操作                  |
 | I/O         | 输入输出工具的封装                      |
 | Lang        | java基本对象（java.lang）方法的工具类包 |
-
-> Guava
-
-仓库地址：[Guava](https://github.com/google/guava)
-
-`Guava`是一个Google开源的Java工具库。Guava提供了很多实用的工具类，如集合类、缓存类、并发工具类、字符串处理类、数学工具类、IO类等。Guava同时还提供了一些高级功能，如事件总线、预条件检查、图形库等。
 
 ## 优点
 
@@ -63,7 +55,6 @@ guava的集合
 
 
 ```
-Guava: http://ifeve.com/google-guava/
 Apache: https://blog.csdn.net/weixin_41563161/article/details/117046259
 模板: https://blog.csdn.net/m0_63947499/article/details/125281870
 ```
