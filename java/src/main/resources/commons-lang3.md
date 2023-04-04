@@ -35,12 +35,12 @@
 ├─org.apache.commons 
 │  ├─lang3 // 提供高度可重用的静态实用方法
 │  │  ├─arch // 配合ArchUtils使用，可以获取处理器的体系结构和类型，并提供方法判断处理器是否是某个结构、某个类型
-│  │  ├─builder // 协助创建对象的ToString()，HashCode()和Compareto(Object)方法
-│  │  ├─compare // 提供使用可比和比较器接口的类
+│  │  ├─builder // 协助实现对象的toString()、hashCode()、equals()和compareTo()方法
+│  │  ├─compare // 封装了compareTo方法，提供Predicate实例
 │  │  ├─concurrent // 为多线程编程提供支持类
 │  │  │  └─locks // 为多线程编程提供支持类
-│  │  ├─event // 提供一些基于事件的实用程序
-│  │  ├─exception // 提供异常的方法
+│  │  ├─event // 用于图形组件绑定事件监听方法
+│  │  ├─exception // 获取exception信息的方法
 │  │  ├─function // 提供函数式接口，以补充java.lang.function和实用程序以与Java 8 Lambdas一起使用
 │  │  ├─math // 扩展Java.Math for Business Mathematical类
 │  │  ├─mutable // 为原始值和对象提供键入的可变包装器
