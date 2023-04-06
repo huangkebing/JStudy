@@ -39,9 +39,9 @@
 │  │  ├─compare // 封装了compareTo方法，提供Predicate实例
 │  │  ├─concurrent // 为多线程编程提供支持类
 │  │  │  └─locks // 为多线程编程提供支持类
-│  │  ├─event // 用于图形组件绑定事件监听方法
+│  │  ├─event // 提供一些基于事件的工具
 │  │  ├─exception // 获取exception信息的方法
-│  │  ├─function // 提供函数式接口，以补充java.lang.function和实用程序以与Java 8 Lambdas一起使用
+│  │  ├─function // 提供允许抛出异常的函数式接口，以补充java.lang.function和实用程序以与Java 8 Lambdas一起使用
 │  │  ├─math // 扩展Java.Math for Business Mathematical类
 │  │  ├─mutable // 为原始值和对象提供键入的可变包装器
 │  │  ├─reflect // 累积java.lang.reflect API的常见高级使用
