@@ -6,7 +6,7 @@ import org.junit.Test;
 
 /**
  * apache.commons.lang3.arch.ArchUtils类使用示例
- * 一些获取CPU信息的方法
+ * 一些获取CPU信息的方法，基于os.arch系统变量
  */
 public class ArchTest {
     @Test

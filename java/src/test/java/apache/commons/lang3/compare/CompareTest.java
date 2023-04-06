@@ -8,9 +8,12 @@ import java.util.Arrays;
 import java.util.List;
 import java.util.stream.Collectors;
 
+/**
+ * apache.commons.lang3.compare.ComparableUtils类使用示例
+ */
 public class CompareTest {
     @Test
-    public void normalTest() {
+    public void compareTest() {
         BigDecimal a = new BigDecimal("3.14");
         BigDecimal b = new BigDecimal("5.14");
         BigDecimal c = new BigDecimal("3.14");
@@ -39,12 +42,32 @@ public class CompareTest {
     }
 
     @Test
+    public void timeTest(){
+        BigDecimal a = new BigDecimal("3.14");
+        BigDecimal b = new BigDecimal("5.14");
+        long l1 = System.currentTimeMillis();
+        for (int j = 0; j < 1000000; j++) {
+            boolean b1 = a.compareTo(b) > 0;
+        }
+        long l2 = System.currentTimeMillis();
+        for (int j = 0; j < 1000000; j++) {
+            boolean b2 = ComparableUtils.is(a).greaterThan(b);
+        }
+        long l3 = System.currentTimeMillis();
+        System.out.println(l2 - l1); //13ms
+        System.out.println(l3 - l2); //41ms
+        // 比较逻辑的封装，相比原生实现：
+        // 可读性更强，原生compareTo需要和0比较
+        // 但效率较差，每次执行ComparableUtils.is()都会创建一个对象
+    }
+
+    @Test
     public void functionTest() {
         List<BigDecimal> list = Arrays.asList(new BigDecimal("1"), new BigDecimal("2"), new BigDecimal("3"),
                 new BigDecimal("4"), new BigDecimal("5"), new BigDecimal("6"));
         // 过滤出list中大于3.14的值
         System.out.println(list.stream().filter(ComparableUtils.gt(new BigDecimal("3.14"))).collect(Collectors.toList()));
-        System.out.println(list.stream().filter(a -> ComparableUtils.is(a).greaterThan(new BigDecimal("3.14")))
+        System.out.println(list.stream().filter(a -> a.compareTo(new BigDecimal("3.14")) > 0)
                 .collect(Collectors.toList()));
         // 过滤出list中在[3.14,5.18]中的值
         System.out.println(list.stream().filter(ComparableUtils.between(new BigDecimal("3.14"), new BigDecimal("5.18")))
