@@ -1,21 +1,14 @@
-import java.util.Arrays;
-import java.util.function.IntBinaryOperator;
+import java.io.IOException;
+import java.util.concurrent.ExecutionException;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
+import java.util.concurrent.Future;
 
 public class Test {
-    public static void main(String[] args) {
-        IntBinaryOperator operator = (int a, int b) -> {
-            int i = 0;
-            try {
-                i = a / b;
-            } catch (Exception e) {
-                throw new RuntimeException(e);
-            }
-            return i;
-        };
-        try {
-            operator.applyAsInt(1,0);
-        } catch (Exception e) {
-            e.printStackTrace();
-        }
+    public static void main(String[] args) throws ExecutionException, InterruptedException {
+        ExecutorService executorService = Executors.newSingleThreadExecutor();
+        Future<Object> e = executorService.submit(() -> {
+            throw new IOException("e");
+        });
     }
 }
