@@ -4,7 +4,7 @@ import org.apache.commons.lang3.math.Fraction;
 import org.junit.Test;
 
 /**
- * apache.commons.lang3.compare.Fraction类使用实例
+ * apache.commons.lang3.math.Fraction类使用实例
  * 实现了分数，并提供了分数的各项运算
  */
 public class FractionTest {
