@@ -42,4 +42,21 @@ public class NumberUtilsTest {
         int[] ints = {3, 4, 5, 6, 7, 8, 9};
         System.out.println(NumberUtils.max(ints));
     }
+
+    @Test
+    public void toNumberTest(){
+        // createXXX，支持十六进制、八进制的数值转化;如Integer，即是在Integer.decode基础上加了一道判空
+        System.out.println(NumberUtils.createInteger("0X2F"));
+        System.out.println(NumberUtils.createInteger("0777"));
+        System.out.println(Integer.decode("0X2F"));
+        // 不为数值时，使用默认数值
+        System.out.println(NumberUtils.toInt("abc", 0));
+        int i;
+        try {
+            i = Integer.parseInt("abc");
+        } catch (NumberFormatException e) {
+            i = 0;
+        }
+        System.out.println(i);
+    }
 }
