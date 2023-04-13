@@ -46,8 +46,7 @@
 │  │  ├─mutable // 为原始值和对象提供键入的可变包装器
 │  │  ├─reflect // 累积java.lang.reflect API的常见高级使用
 │  │  ├─stream // 提供实用程序类以补充java.util.stream中的类
-│  │  ├─text // 提供用于处理和操作文本的类，部分作为java.text的扩展
-│  │  │  └─translate // 用于从一组较小的构建块创建文本转换例程的API
+│  │  ├─text // 包下所有类均以废弃
 │  │  ├─time // 提供使用日期和持续时间的类和方法
 │  │  ├─tuple // 元组类，从3.0版中的一个对类开始
 ```

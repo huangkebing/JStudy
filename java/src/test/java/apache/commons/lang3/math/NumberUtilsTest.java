@@ -43,8 +43,11 @@ public class NumberUtilsTest {
         System.out.println(NumberUtils.max(ints));
     }
 
+    /**
+     * 字符串转化为数值类
+     */
     @Test
-    public void toNumberTest(){
+    public void toNumberTest() {
         // createXXX，支持十六进制、八进制的数值转化;如Integer，即是在Integer.decode基础上加了一道判空
         System.out.println(NumberUtils.createInteger("0X2F"));
         System.out.println(NumberUtils.createInteger("0777"));
