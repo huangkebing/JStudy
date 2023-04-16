@@ -57,6 +57,15 @@ public class ArrayUtilsTest {
         int[] array2 = {89, 144, 233};
         System.out.println(Arrays.toString(ArrayUtils.addAll(array, array2)));
         //-----------remove------------
+        // 移除指定下标的元素
+        System.out.println(Arrays.toString(ArrayUtils.remove(array, 0)));
+        // 移除多个指定下标的元素，也可以直接传数组
+        System.out.println(Arrays.toString(ArrayUtils.removeAll(array, 0, 1, 2)));
+        // 移除从头至尾，第一个出现的指定元素
+        System.out.println(Arrays.toString(ArrayUtils.removeElement(array, 1)));
+        // 移除所有指定的元素
+        System.out.println(Arrays.toString(ArrayUtils.removeAllOccurrences(array, 1)));
+        //------------sub---------------
         // 切子数组，如下即下标在区间[0,5)内的元素
         System.out.println(Arrays.toString(ArrayUtils.subarray(array, 0, 5)));
     }
