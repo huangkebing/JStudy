@@ -1,12 +1,9 @@
 package apache.commons.lang3.mutable;
 
-import org.apache.commons.lang3.AnnotationUtils;
-import org.apache.commons.lang3.ArrayUtils;
 import org.apache.commons.lang3.mutable.MutableInt;
 import org.apache.commons.lang3.mutable.MutableObject;
 import org.junit.Test;
 
-import java.util.Arrays;
 import java.util.HashMap;
 import java.util.Map;
 
