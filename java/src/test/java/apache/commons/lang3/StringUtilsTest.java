@@ -10,6 +10,7 @@ public class StringUtilsTest {
      * 3. objectUtils
      * 4. stream包
      * 5. concurrent包
+     * https://xiaoxiaofeng.com/archives/stringutils
      */
     @Test
     public void test(){
