@@ -23,6 +23,26 @@ public class StringUtilsTest {
         System.out.println(StringUtils.chomp(str1));
     }
 
+    /**
+     * 判空方法
+     * isEmpty只判断字符串是否为空字符串或者null
+     * isBlank除空字符串和null外，还会判断空格、tab、换行符等
+     */
+    @Test
+    public void emptyOrBlankTest(){
+        String empty1 = "";
+        String empty2 = null;
+        String empty3 = " \n    ";
+        String notEmpty = "Hello";
+        System.out.println(StringUtils.isEmpty(empty1));
+        System.out.println(StringUtils.isEmpty(empty2));
+        System.out.println(StringUtils.isEmpty(empty3));
+        System.out.println(StringUtils.isBlank(empty1));
+        System.out.println(StringUtils.isBlank(empty2));
+        System.out.println(StringUtils.isBlank(empty3));
+        System.out.println(StringUtils.isAllBlank(empty1, notEmpty));
+    }
+
     @Test
     public void editTest(){
         String str = "Hello World!";
