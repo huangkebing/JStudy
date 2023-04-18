@@ -6,18 +6,6 @@ import org.junit.Test;
 import java.util.Arrays;
 
 public class StringUtilsTest {
-    /**
-     * 1. validate
-     * 2. StringUtils
-     * 3. concurrent包
-     * https://xiaoxiaofeng.com/archives/stringutils
-     */
-    @Test
-    public void test(){
-        String test = "test";
-        System.out.println(test.contains("ts"));
-        System.out.println(StringUtils.contains(test, "ts"));
-    }
     //---------------------判断与验证---------------------------
     /**
      * 判空方法
@@ -136,19 +124,62 @@ public class StringUtilsTest {
 
     //---------------------编辑字符串---------------------------
 
-
-
-
-
+    /**
+     * split系列方法
+     */
     @Test
-    public void editTest(){
+    public void splitTest(){
+        String str = "ab-!-cd-!-ef";
+        // 按字符'-'分割字符串
+        System.out.println(Arrays.toString(StringUtils.split(str, "--")));
+        // 和split的区别是以"--"字符串分割
+        System.out.println(Arrays.toString(StringUtils.splitByWholeSeparator("ab-!-cd-!-ef", "--")));
+        System.out.println(Arrays.toString(StringUtils.splitByWholeSeparator("ab-!-cd-!-ef", "-!-")));
+    }
+
+    /**
+     * split方法效率测试，jdk中的split使用了正则，而StringUtils用的是字符串匹配
+     */
+    @Test
+    public void splitCostTest(){
+        String str = "Hello,World";
+        long l1 = System.currentTimeMillis();
+        for (int i = 0; i < 500000; i++) {
+            str.split(",");
+        }
+        long l2 = System.currentTimeMillis();
+        for (int i = 0; i < 500000; i++) {
+            StringUtils.split(str, ",");
+        }
+        long l3 = System.currentTimeMillis();
+        System.out.println(l2-l1);
+        System.out.println(l3-l2);
+    }
+
+    /**
+     * subString系列方法，subString方法和jdk使用方式相同
+     * 还提供了一些快捷的切割方法
+     */
+    @Test
+    public void subStringTest(){
         String str = "Hello World!";
-        // 移除remove操作
-        System.out.println(StringUtils.remove(str, "l"));
-        // 覆盖overlay操作，即将str中的[6,9)的字符替换为abc
-        System.out.println(StringUtils.overlay(str, "abc", 6, 9));
-        // 重复repeat操作
-        System.out.println(StringUtils.repeat(str, 2));
+        // 首部取5个字符
+        System.out.println(StringUtils.left(str, 5));
+        // 尾部取6个字符
+        System.out.println(StringUtils.right(str, 6));
+        // 从小标3开始的字符(包括)，取5个字符
+        System.out.println(StringUtils.mid(str, 3, 5));
+    }
+
+    /**
+     * 替换操作，String提供的方法使用了正则
+     * 此外还提供了忽略大小写的替换
+     */
+    @Test
+    public void replaceTest(){
+        String str = "Hello World!";
+        System.out.println(StringUtils.replace(str, "Hello", "hello"));
+        System.out.println(StringUtils.replaceIgnoreCase(str, "hello", "hello"));
         // 替换replace操作
         long l1 = System.currentTimeMillis();
         for (int i = 0; i < 500000; i++) {
@@ -161,5 +192,19 @@ public class StringUtilsTest {
         long l3 = System.currentTimeMillis();
         System.out.println(l2-l1);
         System.out.println(l3-l2);
+    }
+
+    /**
+     * 其他字符串编辑操作，移除、覆盖、重复
+     */
+    @Test
+    public void editTest(){
+        String str = "Hello World!";
+        // 移除remove操作
+        System.out.println(StringUtils.remove(str, "l"));
+        // 覆盖overlay操作，即将str中的[6,9)的字符替换为abc
+        System.out.println(StringUtils.overlay(str, "abc", 6, 9));
+        // 重复repeat操作
+        System.out.println(StringUtils.repeat(str, 2));
     }
 }
