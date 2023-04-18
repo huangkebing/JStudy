@@ -91,9 +91,3 @@
 2. 留意工具类库的问题：如fastjson，若发现使用的类库存在bug，需要及时评估是否会影响业务和性能，如有必要需要及时升级版本或者使用其他类库替代
 3. 学习工具类库的使用方法：在平时可以积累一些优秀的工具类库中的工具方法，在日常开发中便可以联想到，提高开发效率
 
-```
-Apache: https://blog.csdn.net/weixin_41563161/article/details/117046259
-https://www.zhihu.com/column/c_1395490348211298304
-模板: https://blog.csdn.net/m0_63947499/article/details/125281870
-```
-
