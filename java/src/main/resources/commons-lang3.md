@@ -73,17 +73,25 @@ Apache Commons有很多子项目：
 
 ## 缺点
 
-使用的工具包可以快速实现我们的需求，但引入的工具包可能存在安全漏洞和性能问题，需要我们对其有一定的了解
+使用的工具包虽然可以快速实现我们的需求，但引入的工具包可能存在安全漏洞和性能问题
 
-如Apache commons BeanUtils，其中使用到了反射等耗时的操作，性能非常差：
+如Apache commons BeanUtils，其中使用到了反射等耗时的操作，性能较差差：
 
 ![BeanUtils](commons-lang3.assets\BeanUtils.png)
 
-因此在使用工具类之前需要做好调研工作，调研其性能、稳定性等方面，不要给系统留下隐患
+并不是所有的工具类都能使用，因此需要我们平时有一些积累
 
 ## 代码
 
-主要讲一些日常开发中可能会使用到的，或者JDK中没有提供的类和方法
+### 实用型
+
+#### NumberUtils
+
+#### ArrayUtils
+
+#### StringUtils
+
+
 
 ### compare包
 
@@ -91,13 +99,7 @@ Apache Commons有很多子项目：
 
 ### Fraction
 
-### NumberUtils
-
 ### mutable包
-
-### ArrayUtils
-
-### StringUtils
 
 ## 总结
 
