@@ -40,6 +40,7 @@ public class MutableTest {
 
     /**
      * 场景2，在集合中使用基本数据类型时，若值需要经常变动，可以使用可变对象
+     * 和在循环中执行字符串+=操作类似
      */
     @Test
     public void collectionTest(){

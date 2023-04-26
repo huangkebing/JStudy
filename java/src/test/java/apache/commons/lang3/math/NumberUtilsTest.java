@@ -13,7 +13,7 @@ public class NumberUtilsTest {
      */
     @Test
     public void isNumberTest() {
-        // 是否为数字，不支持十六进制和科学计数法
+        // 是否为数字，不支持十六进制和科学计数法(常用)
         System.out.println(NumberUtils.isParsable("3.14"));//true
         System.out.println(NumberUtils.isParsable("0X2F"));//false
         System.out.println(NumberUtils.isParsable("12345E-10"));//false

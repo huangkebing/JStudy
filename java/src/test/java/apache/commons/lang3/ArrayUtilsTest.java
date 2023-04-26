@@ -7,6 +7,7 @@ import java.util.Arrays;
 
 /**
  * org.apache.commons.lang3.ArrayUtils数据工具类使用示例
+ * 日常开发中数组使用的不多，基本上只有字符串的拆分操作(split)会产生数组
  * 其中部分方法和Arrays提供的方法重复(如toString())
  * 提供的一些方法，可以将数组像List那样使用
  */

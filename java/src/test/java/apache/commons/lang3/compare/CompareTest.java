@@ -10,6 +10,7 @@ import java.util.stream.Collectors;
 
 /**
  * apache.commons.lang3.compare.ComparableUtils类使用示例
+ * 封装compareTo
  */
 public class CompareTest {
     @Test

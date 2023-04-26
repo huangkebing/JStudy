@@ -10,7 +10,7 @@ public class StringUtilsTest {
     /**
      * 判空方法
      * 1. isEmpty只判断字符串是否为空字符串或者null
-     * 2. isBlank除空字符串和null外，还会判断空格、tab、换行符等
+     * 2. isBlank除空字符串和null外，还会判断空格、tab、换行符甚至包含了unicode格式的空字符，基于Character.isWhitespace
      * 3. 还有isNotEmpty和isNotBlank分别和isEmpty和isBlank对应
      * 4. isAllEmpty、isAllBlank、isNoneEmpty、isNoneBlank，支持多个字符串判空
      */
@@ -18,18 +18,18 @@ public class StringUtilsTest {
     public void emptyOrBlankTest(){
         String empty1 = "";
         String empty2 = null;
-        String empty3 = " \n    ";
+        String empty3 = " \n    \u2009";
         // isEmpty
-        System.out.println(StringUtils.isEmpty(empty1));
-        System.out.println(StringUtils.isEmpty(empty2));
-        System.out.println(StringUtils.isEmpty(empty3));
+        System.out.println(StringUtils.isEmpty(empty1));//true
+        System.out.println(StringUtils.isEmpty(empty2));//true
+        System.out.println(StringUtils.isEmpty(empty3));//false
         // isBlank
-        System.out.println(StringUtils.isBlank(empty1));
-        System.out.println(StringUtils.isBlank(empty2));
-        System.out.println(StringUtils.isBlank(empty3));
-        // isNoneEmpty
+        System.out.println(StringUtils.isBlank(empty1));//true
+        System.out.println(StringUtils.isBlank(empty2));//true
+        System.out.println(StringUtils.isBlank(empty3));//true
+        // isNoneEmpty，比如有多个入参需要判断非空
         String notEmpty = "Hello";
-        System.out.println(StringUtils.isNoneEmpty(empty1, notEmpty));
+        System.out.println(StringUtils.isNoneEmpty(empty1, notEmpty));//false
     }
 
     /**
@@ -39,6 +39,7 @@ public class StringUtilsTest {
     @Test
     public void containsTest(){
         String str = "Hello World!";
+        System.out.println(StringUtils.contains(str, "Hello"));
         // 忽略大小写的contains
         System.out.println(StringUtils.containsIgnoreCase(str, "hello"));
         // 判断是否包含空白字符，包括空格、tab、换行符等
@@ -125,16 +126,25 @@ public class StringUtilsTest {
     //---------------------编辑字符串---------------------------
 
     /**
-     * split系列方法
+     * split系列方法,
      */
     @Test
     public void splitTest(){
-        String str = "ab-!-cd-!-ef";
-        // 按字符'-'分割字符串
-        System.out.println(Arrays.toString(StringUtils.split(str, "--")));
-        // 和split的区别是以"--"字符串分割
-        System.out.println(Arrays.toString(StringUtils.splitByWholeSeparator("ab-!-cd-!-ef", "--")));
-        System.out.println(Arrays.toString(StringUtils.splitByWholeSeparator("ab-!-cd-!-ef", "-!-")));
+        String str = "a.b.;.;e.f..g.h";
+        // JDK, 按正则'.;'分割字符串 [a.b, , e.f..g.h]
+        System.out.println(Arrays.toString(str.split(".;")));
+        // 按照字符'.',';'来分割字符串 [a, b, e, f, g, h]
+        System.out.println(Arrays.toString(StringUtils.split(str, ".;")));
+        // 按照字符'.',';'来分割字符串，但会保留空字符[a, b, , , , e, f, , g, h]
+        System.out.println(Arrays.toString(StringUtils.splitPreserveAllTokens(str, ".;")));
+        // 按照字符串".;"分割字符串 [a.b, e.f..g.h]
+        System.out.println(Arrays.toString(StringUtils.splitByWholeSeparator(str, ".;")));
+        // 按照字符串".;"分割字符串，但会保留空字符 [a.b, , e.f..g.h]
+        System.out.println(Arrays.toString(StringUtils.splitByWholeSeparatorPreserveAllTokens(str, ".;")));
+        // 按照字符类型来分割，大写字母、小写字母、数字、空格、各类符号 [foo, 200, B, ar, BB, ar, !,  , ;]
+        System.out.println(Arrays.toString(StringUtils.splitByCharacterType("foo200BarBBar! ;")));
+        // 驼峰分割，大写字母后面是小写字母，则会分割到一起 [foo, 200, B, Bar, Bar, !,  , ;]
+        System.out.println(Arrays.toString(StringUtils.splitByCharacterTypeCamelCase("foo200BBarBar! ;")));
     }
 
     /**
