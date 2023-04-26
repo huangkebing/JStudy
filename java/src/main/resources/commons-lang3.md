@@ -1,12 +1,18 @@
-# Apace commons lang3
+# Apache Commons lang
 
-## Apache commons
-
-Apache Commons是一个开源Java类库，旨在提供可重用的、开源的Java代码，减少开发过程中的重复工作。它包含了许多工具类库，用于解决平时编程经常会遇到的问题，例如执行外部进程的命令、压缩与解压缩文件等。Apache Commons几乎不依赖其他第三方的类库，接口稳定，集成简单，可以提高编码效率和代码质量。
+## Apache Commons简介
 
 官方文档：[Apache Commons](https://commons.apache.org/)
 
-Apache Commons有很多子项目：
+`Apache Commons`是Apache软件基金会的项目，Commons的目的是提供开源的、可重用的Java组件
+
+`Apache Commons`项目由三部分组成：
+
+### The Commons Proper
+
+The Commons Proper提供非常多可重用的、稳定的Java组件库。
+
+其子项目如下：
 
 | 包名          | 作用                                                         |
 | ------------- | ------------------------------------------------------------ |
@@ -42,44 +48,55 @@ Apache Commons有很多子项目：
 | VFS           | 用于将文件、FTP、SMB、ZIP  等视为单个逻辑文件系统的虚拟文件系统组件 |
 | Weaver        | 提供一种简单的方法来增强（编织）已编译的字节码               |
 
-## lang3
+可以跟据需要去挑选对应的包，但需要注意鉴别
 
-提供一些工具方法来补充标准Java库，其包结构如下：
+### The Commons Sandbox
 
-```html
-├─org.apache.commons 
-│  ├─lang3 // 提供很多静态工具方法
-│  │  ├─arch // 配合ArchUtils使用，可以获取处理器的体系结构和类型，并提供方法判断处理器是否是某个结构、某个类型
-│  │  ├─builder // 协助实现对象的toString()、hashCode()、equals()和compareTo()方法
-│  │  ├─compare // 封装了compareTo方法，提供Predicate实例
-│  │  ├─concurrent // 为多线程编程提供支持类
-│  │  │  └─locks // 为多线程编程提供支持类
-│  │  ├─event // 提供一些基于事件的工具
-│  │  ├─exception // 获取exception信息的方法
-│  │  ├─function // 提供允许抛出异常的函数式接口，以补充java.lang.function和实用程序以与Java 8 Lambdas一起使用
-│  │  ├─math // 提供了分数类和一些数字工具方法
-│  │  ├─mutable // 为基本数据类型和对象提供可变的包装器
-│  │  ├─reflect // 反射工具包
-│  │  ├─stream // 补充java.util.stream
-│  │  ├─text // 包下所有类均以废弃
-│  │  ├─time // 提供使用日期和持续时间的类和方法
-│  │  ├─tuple // 元组类，提供了Pair和Triple
-```
+The Commons Sandbox是一个临时的项目，其中包含社区成员正在探索和测试新的功能和实用程序。它为Apache Commons社区提供了一个试验新想法的地方，收集并评估新代码，并在尝试维护新代码时为项目管理人员提供时间。新的实用程序可能会在更大的Apache Commons项目中成为一个独立的单元，也可能会闲置
 
-## 优点
+### The Commons Dormant 
 
-1. 提供了丰富工具类，能够减少开发人员的工作量，避免重复造轮子
-3. 经过广泛的使用和测试，具有一定的可靠性
+The Commons Dormant的主要作用是维护那些不再活跃或已经过时的项目。这些项目可能已经失去了活跃的贡献者或用户，也可能已经与其他项目合并或重命名。The Commons Dormant通过提供必要的维护和文档资源，确保这些项目仍然能够持续保持可用和可维护。
 
-## 缺点
+### 优缺点
 
-使用的工具包虽然可以快速实现我们的需求，但引入的工具包可能存在安全漏洞和性能问题
+提供了丰富工具类，能够减少开发人员的工作量，避免重复造轮子
 
-如Apache commons BeanUtils，其中使用到了反射等耗时的操作，性能较差差：
+经过广泛的使用和测试，具有一定的可靠性
+
+------
+
+工具包的质量参差不齐，引入工具包或工具方法前需要深入调研后才能使用，就这要求我们平时有一定的积累
+
+如Apache commons的BeanUtils，虽然实现了对象的拷贝，但其中使用到了性能较差的反射，所以性能不佳：
 
 ![BeanUtils](commons-lang3.assets\BeanUtils.png)
 
-并不是所有的工具类都能使用，因此需要我们平时有一些积累
+## 主要内容 lang简介
+
+`Apache commons lang`为java.lang API提供了大量工具方法，例如：字符串操作、数组操作、随机数生成、反射、时间日期处理等等
+
+注意点：Commons Lang 3.0（及后续版本）与之前的版本（org.apache.commons.lang）使用不同的包（org.apache.commons.lang3），且允许Commons Lang 3与Commons Lang 同时使用，但一般都是使用lang3
+
+lang3中有非常多的工具类和工具方法，但并不是所有的内容都能在日常开发中使用，其包结构如下：
+
+```html
+├─org.apache.commons 
+│  ├─lang3 // 提供很多静态工具方法，比较著名的如StringUtils、ArrayUtils
+│  │  ├─arch // 配合ArchUtils使用，可以获取处理器的体系结构和类型，并提供方法判断处理器是否是某个结构、某个类型
+│  │  ├─builder // 协助实现对象的toString()、hashCode()、equals()和compareTo()方法
+│  │  ├─compare // 封装了compareTo方法，提供Predicate实例
+│  │  ├─concurrent // 提供了一些并发的工具
+│  │  ├─event // 提供一些基于事件的工具
+│  │  ├─exception // 提供一些Exception相关的方法
+│  │  ├─function // 提供允许抛出异常的函数式接口，以补充java.lang.function和实用程序以与Java 8 Lambdas一起使用
+│  │  ├─math // 提供了分数类和一些数字工具方法
+│  │  ├─mutable // 为基本数据类型和不可变对象提供可变的包装类
+│  │  ├─reflect // 反射
+│  │  ├─stream // 补充java.util.stream
+│  │  ├─time // 提供使用日期和持续时间的类和方法
+│  │  ├─tuple // 元组类，提供了Pair和Triple
+```
 
 ## 代码
 
@@ -87,22 +104,20 @@ Apache Commons有很多子项目：
 
 #### NumberUtils
 
-#### ArrayUtils
-
 #### StringUtils
 
+#### ArrayUtils
 
+### 启发型
 
-### compare包
+#### compare
 
-### function包
+#### function
 
-### Fraction
+#### Fraction
 
-### mutable包
+#### mutable
 
-## 总结
+## 简单总结
 
-1. 评估工具类库的优缺点：针对相同的功能，需要了解实现的逻辑，择优使用
-2. 留意工具类库的问题：如fastjson，若发现使用的类库存在bug，需要及时评估是否会影响业务和性能，如有必要需要及时升级版本或者使用其他类库替代
-3. 学习工具类库的使用方法：在平时可以积累一些优秀的工具类库中的工具方法，在日常开发中便可以联想到，提高开发效率
+使用好工具类可以达到事半功倍、简化代码的效果。但使用前需要深入调研，充分了解后再觉得是否使用，考验平时的积累
